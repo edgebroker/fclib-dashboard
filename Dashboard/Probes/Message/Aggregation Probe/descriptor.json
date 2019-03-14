@@ -1,0 +1,72 @@
+{
+  "description": "Extracts property values out of a message, applies an aggregate function and provides them as a probe stream on a time frame.",
+  "labelproperty": "probename",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "message"
+      }
+    ],
+    "output": [
+      {
+        "name": "Out",
+        "type": "probestream"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "probename",
+      "label": "Probe Name",
+      "description": "Assign a name to this probe to identify the stream to assign it to a dashboard component.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "properties",
+      "label": "Properties",
+      "description": "Provide the names of the properties that provide the values. For 'count' function use name 'count'",
+      "type": "array",
+      "fieldtypes": [
+        "identifier"
+      ],
+      "mandatory": true
+    },
+    {
+      "name": "func",
+      "label": "Function",
+      "description": "Provide the function that is applied on the property values.",
+      "type": "choice",
+      "choice" : ["min", "max", "sum", "average", "count"],
+      "mandatory": true
+    },
+    {
+      "name": "fieldlabels",
+      "label": "Field Labels",
+      "description": "Add a label for property for dashboard charts.",
+      "type": "array",
+      "fieldtypes": [
+        "string"
+      ],
+      "mandatory": true
+    },
+    {
+      "name": "updateintervalsec",
+      "label": "Update Interval Seconds",
+      "description": "Interval in seconds in which the updates are sent to the dashboard component.",
+      "type": "integer",
+      "min": 1,
+      "default": 10,
+      "mandatory": true
+    },
+    {
+      "name": "resetinterval",
+      "label": "Reset Interval",
+      "description": "Interval in which the aggregation value is reset to 0.",
+      "type": "choice",
+      "choice" : ["second", "minute", "hour", "day", "never"],
+      "mandatory": true
+    }
+  ]
+}

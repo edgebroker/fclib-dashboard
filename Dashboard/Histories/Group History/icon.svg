@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 224 224" width="24px" height="24px">
+  <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter"
+     stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none"
+     font-size="none" text-anchor="none" style="mix-blend-mode: normal">
+    <path d="M0,224v-224h224v224z" fill="none"/>
+    <g fill="#f1c40f">
+      <path
+          d="M168,37.33333c-5.152,0 -9.33333,4.18133 -9.33333,9.33333v130.66667c0,5.152 4.18133,9.33333 9.33333,9.33333h28c5.152,0 9.33333,-4.18133 9.33333,-9.33333v-130.66667c0,-5.152 -4.18133,-9.33333 -9.33333,-9.33333zM102.66667,74.66667c-5.152,0 -9.33333,4.18133 -9.33333,9.33333v93.33333c0,5.152 4.18133,9.33333 9.33333,9.33333h28c5.152,0 9.33333,-4.18133 9.33333,-9.33333v-93.33333c0,-5.152 -4.18133,-9.33333 -9.33333,-9.33333zM37.33333,112c-5.152,0 -9.33333,4.18133 -9.33333,9.33333v56c0,5.152 4.18133,9.33333 9.33333,9.33333h28c5.152,0 9.33333,-4.18133 9.33333,-9.33333v-56c0,-5.152 -4.18133,-9.33333 -9.33333,-9.33333z"/>
+    </g>
+  </g>
+</svg>

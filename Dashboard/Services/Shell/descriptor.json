@@ -1,0 +1,41 @@
+{
+  "description": "Provides a shell to display in a terminal component. A shell can be connected to a parent shell to build hierarchies of shells.",
+  "labelproperty": "shellname",
+  "properties": [
+    {
+      "name": "shellname",
+      "label": "Shell Name",
+      "description": "Assign a name to this shell to identify the stream to assign it to a dashboard component. This name is also used as the shell command if registered at a parent shell.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "description",
+      "label": "Description",
+      "description": "Assign a short sentence to describe this shell.",
+      "type": "string",
+      "mandatory": true
+    },
+    {
+      "name": "hasproperties",
+      "label": "Provides Get/Set/Delete/List Properties",
+      "description": "If enabled, this shell will provide to set, get, delete and list properties.",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "name": "parentflow",
+      "label": "Parent Flow Name",
+      "description": "Specify the flow name where the parent shell component is located.",
+      "type": "identifier",
+      "mandatory": false
+    },
+    {
+      "name": "parentshell",
+      "label": "Parent Shell Name",
+      "description": "Specify the name of the parent shell where this shell should be registered as a sub shell.",
+      "type": "identifier",
+      "mandatory": false
+    }
+  ]
+}

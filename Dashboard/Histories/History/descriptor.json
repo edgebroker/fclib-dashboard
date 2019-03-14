@@ -1,0 +1,65 @@
+{
+  "description": "Creates a history from a Probe stream",
+  "labelproperty": "historyname",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "probestream"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "historyname",
+      "label": "History Name",
+      "description": "Assign a name to this history to identify the stream to assign it to a dashboard component.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "continue",
+      "label": "Continue Last Value",
+      "description": "The probe stream only delivers updates when it has new/updated values. The history uses either the last value in each update interval or resets it to 0. This depends on how the dashboard component needs it. A throughput chart needs the last value while a revenue charts requires to reset it to 0.",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "name": "func",
+      "label": "Function",
+      "description": "Function to perform on the data.",
+      "type": "choice",
+      "choice": [
+        "sum",
+        "average"
+      ],
+      "mandatory": true
+    },
+    {
+      "name": "updateintervalsec",
+      "label": "Update Interval Seconds",
+      "description": "Interval in seconds in which the updates are sent to the dashboard component.",
+      "type": "integer",
+      "min": 1,
+      "default": 10,
+      "mandatory": true
+    },
+    {
+      "name": "labely",
+      "label": "Label Y Axis Dashboard",
+      "description": "Specify the label for the Y axis for dashboard charts.",
+      "type": "string",
+      "mandatory": true
+    },
+    {
+      "name": "fieldlabels",
+      "label": "Field Labels",
+      "type": "array",
+      "description": "Add a label for each field in the probe stream for dashboard charts.",
+      "fieldtypes": [
+        "string"
+      ],
+      "mandatory": true
+    }
+  ]
+}

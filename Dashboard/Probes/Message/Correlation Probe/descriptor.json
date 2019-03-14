@@ -1,0 +1,65 @@
+{
+  "description": "Measures the time between requests and corresponding replies and provides the number of open requests as a probe stream.",
+  "labelproperty": "probename",
+  "links": {
+    "input": [
+      {
+        "name": "Request",
+        "type": "message",
+        "mandatory": true
+      },
+      {
+        "name": "Reply",
+        "type": "message",
+        "mandatory": true
+      }
+    ],
+    "output": [
+      {
+        "name": "Out",
+        "type": "probestream"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "probename",
+      "label": "Probe Name",
+      "description": "Assign a name to this probe to identify the stream to assign it to a dashboard component.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "correlationproprequest",
+      "label": "Request Correlation Property",
+      "description": "Provide the name of the property that contains the value to correlate requests and replies.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "correlationpropreply",
+      "label": "Reply Correlation Property",
+      "description": "Provide the name of the property that contains the value to correlate requests and replies.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "maxopenrequests",
+      "label": "Maximum Open Requests",
+      "description": "Provide the maximum open requests to track.",
+      "type": "integer",
+      "min": 1,
+      "default": 1000,
+      "mandatory": true
+    },
+    {
+      "name": "updateintervalsec",
+      "label": "Update Interval Seconds",
+      "description": "Interval in seconds in which the updates are sent to the dashboard component.",
+      "type": "integer",
+      "min": 1,
+      "default": 10,
+      "mandatory": true
+    }
+  ]
+}

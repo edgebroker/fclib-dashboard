@@ -1,0 +1,64 @@
+{
+  "description": "Creates a group history from a message stream",
+  "labelproperty": "historyname",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "message"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "historyname",
+      "label": "History Name",
+      "description": "Assign a name to this history to identify the stream to assign it to a dashboard component.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "groupproperty",
+      "label": "Group Property",
+      "description": "Provide the name of the property that is used to group the history.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "valueproperty",
+      "label": "Value Property",
+      "description": "Provide the name of the property that contains the value.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "func",
+      "label": "Function",
+      "description": "Function to perform on the data.",
+      "type": "choice",
+      "choice": [
+        "min",
+        "max",
+        "sum",
+        "average"
+      ],
+      "mandatory": true
+    },
+    {
+      "name": "updateintervalsec",
+      "label": "Update Interval Seconds",
+      "description": "Interval in seconds in which the updates are sent to the dashboard component.",
+      "type": "integer",
+      "min": 1,
+      "default": 10,
+      "mandatory": true
+    },
+    {
+      "name": "labely",
+      "label": "Label Y Axis Dashboard",
+      "description": "Specify the label for the Y axis to for dashboard charts.",
+      "type": "string",
+      "mandatory": true
+    }
+  ]
+}

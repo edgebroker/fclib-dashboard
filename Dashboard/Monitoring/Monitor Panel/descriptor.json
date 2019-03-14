@@ -1,0 +1,39 @@
+{
+  "description": "Collects state messages from monitor components and builds a persistent history to display in a dashboard monitor table component.",
+  "labelproperty": "panelname",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "statemessage"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "panelname",
+      "label": "Monitor Panel Name",
+      "description": "Assign a name to this monitor panel to identify the stream to assign it to a dashboard component.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "historysize",
+      "label": "History Size",
+      "description": "Size of the history to store for each reporting monitor in number of messages.",
+      "type": "integer",
+      "min": 1,
+      "default": 10,
+      "mandatory": true
+    },
+    {
+      "name": "retiredays",
+      "label": "Retire Messages after Days",
+      "description": "Specifies after how many days monitor messages will retire.",
+      "type": "integer",
+      "min": 1,
+      "default": 5,
+      "mandatory": true
+    }
+  ]
+}

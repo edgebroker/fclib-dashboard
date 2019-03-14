@@ -1,0 +1,21 @@
+{
+  "description": "Provides a CLI shell to access and manipulate the router's configuration.",
+  "labelproperty": "shellname",
+  "properties": [
+    {
+      "name": "shellname",
+      "label": "Shell Name",
+      "description": "Assign a name to this shell to identify the stream to assign it to a dashboard component.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "adminrole",
+      "label": "Admin Role",
+      "description": "Assign a predefined admin role to this shell. The admin role must be preconfigured and limits this CLI shell to certain operations.",
+      "type": "string",
+      "default" : "anonymous",
+      "mandatory": true
+    }
+  ]
+}

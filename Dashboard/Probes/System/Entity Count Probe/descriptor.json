@@ -1,0 +1,37 @@
+{
+  "description": "Counts the number of entries of a CLI context and provides it as a single value probe stream.",
+  "labelproperty": "probename",
+  "links": {
+    "output": [
+      {
+        "name": "Out",
+        "type": "probestream"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "probename",
+      "label": "Probe Name",
+      "description": "Assign a name to this probe to identify the stream to assign it to a dashboard component.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "context",
+      "label": "CLI Context",
+      "description": "Provide the CLI context.",
+      "type": "string",
+      "mandatory": true
+    },
+    {
+      "name": "updateintervalsec",
+      "label": "Update Interval Seconds",
+      "description": "Interval in seconds in which the updates are sent to the dashboard component.",
+      "type": "integer",
+      "min": 1,
+      "default": 10,
+      "mandatory": true
+    }
+  ]
+}

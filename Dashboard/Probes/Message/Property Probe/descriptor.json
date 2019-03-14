@@ -1,0 +1,47 @@
+{
+  "description": "Extracts property values out of a message and provides them as a probe stream.",
+  "labelproperty": "probename",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "message"
+      }
+    ],
+    "output": [
+      {
+        "name": "Out",
+        "type": "probestream"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "probename",
+      "label": "Probe Name",
+      "description": "Assign a name to this probe to identify the stream to assign it to a dashboard component.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "properties",
+      "label": "Properties",
+      "description": "Provide the names of the properties that provide the values.",
+      "type": "array",
+      "fieldtypes": [
+        "identifier"
+      ],
+      "mandatory": true
+    },
+    {
+      "name": "fieldlabels",
+      "label": "Field Labels",
+      "type": "array",
+      "description": "Add a label for property for dashboard charts.",
+      "fieldtypes": [
+        "string"
+      ],
+      "mandatory": true
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "description": "Connects to a CLI context and creates a timeline history stream from add and remove events.",
+  "labelproperty": "timelinename",
+  "properties": [
+    {
+      "name": "timelinename",
+      "label": "Timeline Name",
+      "description": "Assign a name to this timeline to identify the stream to assign it to a dashboard component.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "context",
+      "label": "CLI Context",
+      "description": "Provide the CLI context to connect to.",
+      "type": "choice",
+      "choice": ["sys$jms/usage", "sys$amqp/usage", "sys$mqtt/usage/connections", "sys$routing/usage/connections"],
+      "mandatory": true
+    },
+    {
+      "name": "selector",
+      "label": "Selector",
+      "description": "Provide an optional JMS message selector (SQL where condition, reference the properties in the message).",
+      "type": "selector",
+      "mandatory": false
+    },
+    {
+      "name": "historyhours",
+      "label": "History Hours",
+      "description": "Provide the size of the history back in time in hours.",
+      "type": "integer",
+      "min": 1,
+      "default": 24,
+      "mandatory": true
+    },
+    {
+      "name": "updateintervalsec",
+      "label": "Update Interval Seconds",
+      "description": "Interval in seconds in which the updates are sent to the dashboard component.",
+      "type": "integer",
+      "min": 1,
+      "default": 10,
+      "mandatory": true
+    }
+  ]
+}

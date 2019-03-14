@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 224 224" width="24px" height="24px">
+  <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter"
+     stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none"
+     font-size="none" text-anchor="none" style="mix-blend-mode: normal">
+    <path d="M0,224v-224h224v224z" fill="none"/>
+    <g fill="#f1c40f">
+      <path
+          d="M37.33333,28v140c0,10.20192 8.46475,18.66667 18.66667,18.66667h140v-18.66667h-140v-140zM189.40104,49.40104l-40.06771,40.06771l-28,-28l-53.26562,53.26563l13.19792,13.19791l40.06771,-40.06771l28,28l53.26562,-53.26562z"/>
+    </g>
+  </g>
+</svg>
