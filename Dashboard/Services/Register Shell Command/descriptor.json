@@ -1,0 +1,34 @@
+{
+  "description": "Registers a shell command.",
+  "labelproperty": "name",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "message"
+      }
+    ],
+    "output": [
+      {
+        "name": "Out",
+        "type": "message"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "name",
+      "label": "Command Name",
+      "description": "Specify the name of the command.",
+      "type": "string",
+      "mandatory": true
+    },
+    {
+      "name": "description",
+      "label": "Description",
+      "description": "Assign a short sentence to describe this command.",
+      "type": "string",
+      "mandatory": true
+    }
+  ]
+}

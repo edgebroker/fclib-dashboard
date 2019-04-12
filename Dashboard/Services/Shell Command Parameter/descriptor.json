@@ -1,0 +1,56 @@
+{
+  "description": "Defines a single parameter of a shell command.",
+  "labelproperty": "name",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "message"
+      }
+    ],
+    "output": [
+      {
+        "name": "Out",
+        "type": "message"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "name",
+      "label": "Parameter Name",
+      "description": "Specify the name of the parameter.",
+      "type": "string",
+      "mandatory": true
+    },
+    {
+      "name": "description",
+      "label": "Description",
+      "description": "Assign a short sentence to describe this parameter.",
+      "type": "string",
+      "mandatory": true
+    },
+    {
+      "name": "type",
+      "label": "Type",
+      "description": "Specify the type of the parameter.",
+      "type": "choice",
+      "choice": ["boolean", "integer", "string", "identifier", "destination", "choice"],
+      "mandatory": true
+    },
+    {
+      "name": "choice",
+      "label": "Choice Values",
+      "description": "If the type is 'choice', specify the possible values here.",
+      "type": "array",
+      "mandatory": false
+    },
+    {
+      "name": "mandatory",
+      "label": "Mandatory",
+      "description": "Specify whether this parameter is mandatory.",
+      "type": "boolean",
+      "default": true
+    }
+  ]
+}

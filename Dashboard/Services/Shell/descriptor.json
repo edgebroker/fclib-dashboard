@@ -1,6 +1,18 @@
 {
-  "description": "Provides a shell to display in a terminal component. A shell can be connected to a parent shell to build hierarchies of shells.",
+  "description": "Provides a shell to display in a terminal component.",
   "labelproperty": "shellname",
+  "links": {
+    "input": [
+      {
+        "name": "Registration",
+        "type": "message"
+      }
+    ],
+    "outputdepend": {
+       "name": "commands",
+       "type": "message"
+     }
+  },
   "properties": [
     {
       "name": "shellname",
@@ -17,24 +29,13 @@
       "mandatory": true
     },
     {
-      "name": "hasproperties",
-      "label": "Provides Get/Set/Delete/List Properties",
-      "description": "If enabled, this shell will provide to set, get, delete and list properties.",
-      "type": "boolean",
-      "default": false
-    },
-    {
-      "name": "parentflow",
-      "label": "Parent Flow Name",
-      "description": "Specify the flow name where the parent shell component is located.",
-      "type": "identifier",
-      "mandatory": false
-    },
-    {
-      "name": "parentshell",
-      "label": "Parent Shell Name",
-      "description": "Specify the name of the parent shell where this shell should be registered as a sub shell.",
-      "type": "identifier",
+      "name": "commands",
+      "label": "Command Output Handler",
+      "description": "Specify the names of the command outputs per registered command. The names MUST match the command names.",
+      "type": "array",
+      "fieldtypes": [
+        "identifier"
+      ],
       "mandatory": false
     }
   ]
