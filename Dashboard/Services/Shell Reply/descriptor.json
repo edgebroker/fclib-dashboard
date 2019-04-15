@@ -1,0 +1,48 @@
+{
+  "description": "Creates a shell command reply text and sets it in the body of an incoming text message.",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "message"
+      }
+    ],
+    "output": [
+      {
+        "name": "Out",
+        "type": "message"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "shellname",
+      "label": "Shell Name",
+      "description": "Specify the name of the shell.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "outcome",
+      "label": "Outcome",
+      "description": "Specify the outcome set in the reply.",
+      "type": "choice",
+      "choice": ["Result:", "Info:", "Warning:", "Error:"],
+      "mandatory": true
+    },
+    {
+      "name": "message",
+      "label": "Message",
+      "description": "Specify the result message. Properties of the incoming message can be referenced by {propertyname}, flow parameters by {{parametername}}",
+      "type": "textarea",
+      "mandatory": true
+    },
+    {
+      "name": "isjson",
+      "label": "Is JSON",
+      "description": "Specify whether the message is a JSON.",
+      "type": "boolean",
+      "default": true
+    }
+  ]
+}
