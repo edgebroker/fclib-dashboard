@@ -11,7 +11,7 @@ function handler(In) {
             message: null
         }
     };
-    var text = this.flowcontext.substitute(this.props["message"]);
+    var text = replaceAll(this.flowcontext.substitute(this.props["message"], "{body}", In.body()));
 
     In.properties().forEach(function(prop){
         text = replaceAll(text, "\\{"+prop.name()+"\\}", prop.value().toString());

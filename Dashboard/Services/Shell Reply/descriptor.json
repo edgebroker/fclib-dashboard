@@ -33,7 +33,7 @@
     {
       "name": "message",
       "label": "Message",
-      "description": "Specify the result message. Properties of the incoming message can be referenced by {propertyname}, flow parameters by {{parametername}}",
+      "description": "Specify the result message. Properties of the incoming message can be referenced by {propertyname}, the body of the text message by {body}, flow parameters by {{parametername}}",
       "type": "textarea",
       "mandatory": true
     },
