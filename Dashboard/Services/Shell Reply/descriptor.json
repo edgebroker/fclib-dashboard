@@ -27,7 +27,7 @@
       "label": "Outcome",
       "description": "Specify the outcome set in the reply.",
       "type": "choice",
-      "choice": ["Result:", "Info:", "Warning:", "Error:"],
+      "choice": ["Result:", "Information:", "Warning:", "Error:"],
       "mandatory": true
     },
     {
