@@ -52,7 +52,11 @@ function handler() {
             .exceptionOff()
             .execute("cc " + request.context)
             .executeWithResult(request.command);
-        msg.body.message = JSON.parse(result);
+        try {
+            msg.body.message = JSON.parse(result);
+        } catch (e) {
+            msg.body.message = ["Error:", "Unable to parse the result into a JSON as it probably contains control characters."]
+        }
         output.send(
             stream.create().message()
                 .textMessage()
@@ -64,7 +68,7 @@ function handler() {
     }
 
     // Init Requests
-    stream.create().input(this.compid+"_initrequests").topic().destinationName(this.streamname).selector("initrequest = true")
+    stream.create().input(this.compid + "_initrequests").topic().destinationName(this.streamname).selector("initrequest = true")
         .onInput(function (input) {
             var out = stream.create().output(null).forAddress(input.current().replyTo());
             sendInit(out, input.current().correlationId());
@@ -72,7 +76,7 @@ function handler() {
         });
 
     // Command Requests
-    stream.create().input(this.compid+"_commandrequests").topic().destinationName(this.streamname).selector("commandrequest = true")
+    stream.create().input(this.compid + "_commandrequests").topic().destinationName(this.streamname).selector("commandrequest = true")
         .onInput(function (input) {
             var out = stream.create().output(null).forAddress(input.current().replyTo());
             executeCommand(out, input.current().correlationId(), JSON.parse(input.current().body()));
