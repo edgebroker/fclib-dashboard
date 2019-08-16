@@ -5,6 +5,7 @@ function handler(In) {
     var parm = {};
     parm["name"] = this.props["name"];
     parm["description"] = this.props["description"];
+    parm["converttotype"] = this.props["converttotype"];
     parm["mandatory"] = this.props["mandatory"];
 
     var validator = {};

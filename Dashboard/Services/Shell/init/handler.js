@@ -120,10 +120,17 @@ function handler() {
     function validate(value, parm) {
         if (!parm.validator)
             return value;
+        var converted = value;
         switch (parm.validator.type) {
             case "integer":
                 if (!INTEGER.test(value))
                     throw "Value '" + value + "' is not an valid integer!";
+                if (parm.converttotype)
+                    converted = parseInt(value);
+                break;
+            case "boolean":
+                if (parm.converttotype)
+                    converted = value === "true";
                 break;
             case "identifier":
                 if (!IDENTIFIER.test(value))
@@ -145,7 +152,7 @@ function handler() {
                     throw "Value '" + value + "' is invalid! Allowed are: " + JSON.stringify(parm.validator.values);
                 break;
         }
-        return value;
+        return converted;
     }
 
     function fillParameters(cmd, parms) {

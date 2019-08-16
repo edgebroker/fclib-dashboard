@@ -51,6 +51,13 @@
       "description": "Specify whether this parameter is mandatory.",
       "type": "boolean",
       "default": true
+    },
+    {
+      "name": "converttotype",
+      "label": "Convert to Type",
+      "description": "Converts and returns the parameter values according to their types, otherwise always as string.",
+      "type": "boolean",
+      "default": false
     }
   ]
 }
