@@ -10,6 +10,7 @@ function handler() {
         type: "service"
     };
     var Util = Java.type("com.swiftmq.util.SwiftUtilities");
+    var JAVA_INTEGER = Java.type("java.lang.Integer");
     var WIDTH_L = 20;
     var WIDTH_R = 50;
     var INTEGER = /^\d+$/;
@@ -126,7 +127,7 @@ function handler() {
                 if (!INTEGER.test(value))
                     throw "Value '" + value + "' is not an valid integer!";
                 if (parm.converttotype)
-                    converted = parseInt(value);
+                    converted = JAVA_INTEGER.valueOf(value);
                 break;
             case "boolean":
                 if (parm.converttotype)
