@@ -43,6 +43,7 @@ function handler() {
         );
         self.executeOutputLink("Out", self.msg);
         self.count = 0;
+        self.msg.body.values[0] = 0;
     }
 
     stream.create().output(this.streamname).topic();
