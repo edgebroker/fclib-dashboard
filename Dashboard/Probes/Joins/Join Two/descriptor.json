@@ -28,6 +28,14 @@
       "mandatory": true
     },
     {
+      "name": "accumulate",
+      "label": "Accumulate",
+      "description": "Accumulate the received values within an update interval.",
+      "type": "boolean",
+      "default": true,
+      "mandatory": false
+    },
+    {
       "name": "fieldlabels",
       "label": "Field Labels",
       "description": "Add a label for each value for dashboard charts.",

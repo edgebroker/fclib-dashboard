@@ -1,3 +1,6 @@
 function handler(Two) {
-    this.msg.body.values[1] = Two.body.values[0];
+    if (this.props["accumulate"] === true)
+        this.msg.body.values[1] = One.body.values[0];
+    else
+        this.msg.body.values[1] += One.body.values[0];
 }
