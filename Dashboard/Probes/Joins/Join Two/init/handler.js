@@ -20,8 +20,6 @@ function handler() {
         }
     };
 
-    reset();
-
     stream.create().timer(this.compid+"_at_the_minute_starter").next().beginOfMinute().onTimer(function (t) {
         stream.create().timer(self.compid+"_update").interval().seconds(self.updateIntervalSec).onTimer(function (timer) {
             sendUpdate();
