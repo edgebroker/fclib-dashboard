@@ -10,15 +10,9 @@ function handler() {
         fields: this.props["fieldlabels"]
     };
     this.updateIntervalSec = this.props["updateintervalsec"];
-    this.msg = {
-        msgtype: "stream",
-        streamname: this.streamname,
-        eventtype: null,
-        body: {
-            time: null,
-            values: [0, 0]
-        }
-    };
+
+    this.cnt1 = 0;
+    this.cnt2 = 0;
 
     stream.create().timer(this.compid+"_at_the_minute_starter").next().beginOfMinute().onTimer(function (t) {
         stream.create().timer(self.compid+"_update").interval().seconds(self.updateIntervalSec).onTimer(function (timer) {
@@ -26,23 +20,26 @@ function handler() {
         }).start();
     });
 
-    this.handleMessage = function(message){
-        self.count++;
-        self.msg.body.values[0] = self.count;
-    };
-
     function sendUpdate() {
-        self.msg.eventtype = "update";
-        self.msg.body.time = time.currentTime();
+        var msg = {
+                msgtype: "stream",
+                streamname: self.streamname,
+                eventtype: "update",
+                body: {
+                    time: time.currentTime(),
+                    values: [self.cnt1, self.cnt2]
+                }
+            };
         stream.output(self.streamname).send(
             stream.create().message()
                 .textMessage()
                 .property("streamdata").set(true)
                 .property("streamname").set(self.streamname)
-                .body(JSON.stringify(self.msg))
+                .body(JSON.stringify(msg))
         );
-        self.executeOutputLink("Out", self.msg);
-        self.msg.body.values = [0, 0];
+        self.executeOutputLink("Out", msg);
+        self.cnt1 = 0;
+        self.cnt2 = 0;
     }
 
     stream.create().output(this.streamname).topic();
@@ -52,15 +49,22 @@ function handler() {
     // Init Requests
     stream.create().input(this.streamname).topic().selector("initrequest = true")
         .onInput(function (input) {
+            var msg = {
+                  msgtype: "stream",
+                  streamname: self.streamname,
+                  eventtype: "init",
+                  body: {
+                      time: time.currentTime(),
+                      values: [self.cnt1, self.cnt2]
+                  }
+              };
             var out = stream.create().output(null).forAddress(input.current().replyTo());
-            self.msg.eventtype = "init";
-            self.msg.body.time = time.currentTime();
             out.send(
                 stream.create().message()
                     .textMessage()
                     .property("streamdata").set(true)
                     .property("streamname").set(self.streamname)
-                    .body(JSON.stringify(self.msg))
+                    .body(JSON.stringify(msg))
             );
             out.close();
         });
