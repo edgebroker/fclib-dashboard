@@ -1,6 +1,6 @@
 function handler(Two) {
     if (this.props["accumulate"] === true)
-        this.cnt1 += Two.body.values[0];
+        this.cnt2 += Two.body.values[0];
     else
         this.cnt2 = Two.body.values[0];
 }
