@@ -16,7 +16,7 @@ function handler() {
         eventtype: null,
         body: {
             time: null,
-            values: []
+            values: [0]
         }
     };
 
