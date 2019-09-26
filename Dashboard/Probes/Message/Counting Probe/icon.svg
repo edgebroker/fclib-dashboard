@@ -1,2 +1,12 @@
 <?xml version="1.0"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 224 224" width="24px" height="24px"><g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><path d="M0,224v-224h224v224z" fill="none"/><g fill="#f1c40f"><g id="surface1"><path d="M18.66667,18.66667v186.66667h186.66667v-18.66667h-168v-74.66667h18.66667v-18.66667h-18.66667v-74.66667zM121.33333,28c-15.67708,0.03646 -34.63541,20.67188 -48.125,56h96.25c-13.48958,-35.4375 -32.41146,-56.03646 -48.125,-56zM74.66667,93.33333v18.66667h18.66667v-18.66667zM112,93.33333v18.66667h18.66667v-18.66667zM149.33333,93.33333v18.66667h18.66667v-18.66667zM186.66667,93.33333v18.66667h18.66667v-18.66667zM62.41667,121.33333c-3.5,16.88021 -5.86979,35.58333 -6.41667,56h130.66667c-0.61979,-20.41667 -2.91667,-39.11979 -6.41667,-56z"/></g></g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 224 224" width="24px" height="24px">
+  <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter"
+     stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none"
+     font-size="none" text-anchor="none" style="mix-blend-mode: normal">
+    <path d="M0,224v-224h224v224z" fill="none"/>
+    <g fill="#f1c40f">
+      <path
+          d="M104.21615,28l-21.51042,87.5l-3.44531,-12.83333h-35.1276c-3.32858,-5.76529 -9.47565,-9.32156 -16.13281,-9.33333c-10.30932,0 -18.66667,8.35735 -18.66667,18.66667c0,10.30932 8.35735,18.66667 18.66667,18.66667c6.66368,-0.00527 12.8192,-3.56241 16.15104,-9.33333h20.79948l10.02604,37.33333h16.33333l18.83073,-76.59896l16.67969,104.59896h16.47917l13.61718,-65.33333h22.95052c3.32858,5.76529 9.47565,9.32156 16.13282,9.33333c10.30932,0 18.66667,-8.35735 18.66667,-18.66667c0,-10.30932 -8.35735,-18.66667 -18.66667,-18.66667c-6.66368,0.00527 -12.8192,3.56241 -16.15104,9.33333h-38.09896l-5.34115,25.59375l-15.98697,-100.26042z"/>
+    </g>
+  </g>
+</svg>
