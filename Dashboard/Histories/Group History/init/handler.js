@@ -163,9 +163,9 @@ function handler() {
 
     function storeNextMemory(key, memory, retired, t, out) {
         var result = performFunc(retired);
-        if (self.func === "min" || result > 0) {
+        if (self.func === "min" || result !== 0) {
             var msg = stream.create().message().message().property(self.groupProp).set(key);
-            msg.property(self.valueProp).set(performFunc(retired));
+            msg.property(self.valueProp).set(result);
             msg.property("_TIME").set(t);
             memory.add(msg);
         }
@@ -180,7 +180,7 @@ function handler() {
     function insertArray(keyArray, valArray, key, value) {
         for (var i = 0; i < valArray.length; i++) {
             if (compare(valArray[i], value)) {
-                if (i == 0) {
+                if (i === 0) {
                     keyArray.unshift(key);
                     valArray.unshift(value);
                 } else {
