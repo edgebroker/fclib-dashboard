@@ -17,7 +17,8 @@
     "output": [
       {
         "name": "Out",
-        "type": "probestream"
+        "type": "probestream",
+        "eventroot": true
       }
     ]
   },
