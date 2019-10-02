@@ -1,0 +1,45 @@
+{
+  "description": "An async shell reply handler. Stores the original request and calls the appropriate path with the same request on response.",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "message",
+        "mandatory": true
+      },
+      {
+        "name": "OnResult",
+        "type": "message",
+        "mandatory": true
+      },
+      {
+        "name": "OnError",
+        "type": "message",
+        "mandatory": false
+      }
+    ],
+    "output": [
+      {
+        "name": "WithIdAdded",
+        "type": "message"
+      },
+      {
+        "name": "Result",
+        "type": "message"
+      },
+      {
+        "name": "Error",
+        "type": "message"
+      }
+    ]
+  },
+  "refs": {
+    "output": [
+      {
+        "name": "OriginalRequest",
+        "type": "message"
+      }
+    ]
+  },
+  "properties": [  ]
+}
