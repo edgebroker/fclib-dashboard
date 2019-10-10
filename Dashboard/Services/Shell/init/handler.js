@@ -158,11 +158,11 @@ function handler() {
 
     function fillParameters(cmd, parms) {
         var result = [];
+        if (cmd.length - 1 !== parms.length)
+            throw "Invalid number of parameters for this command: " + cmd[0];
         if (cmd.length === 1) {
             return result;
         }
-        if (cmd.length - 1 !== parms.length)
-            throw "Invalid number of parameters for this command: " + cmd[0];
         for (var i = 1; i < cmd.length; i++) {
             if (cmd[i] === "-") {
                 if (parms[i - 1].mandatory)
@@ -172,7 +172,6 @@ function handler() {
                 result.push({name: parms[i - 1].name, value: validate(cmd[i], parms[i - 1])});
             }
         }
-        stream.log().info(JSON.stringify(result));
         return result;
     }
 
@@ -184,7 +183,6 @@ function handler() {
         try {
             var parms = JSON.parse(stream.memory(self.compid + "_commands").index("command").get(cmd[0]).first().property("parameters").value().toString());
             var result = fillParameters(cmd, parms);
-            stream.log().info("2: "+JSON.stringify(result));
             var fwdMsg = stream.create().message().textMessage()
                 .replyTo(cmdMsg.replyTo())
                 .correlationId(cmdMsg.correlationId())
@@ -234,10 +232,10 @@ function handler() {
         };
         var id = cmdMsg.correlationId();
         var request = JSON.parse(cmdMsg.body());
+        var result;
+        var handled = true;
         try {
             var cmd = Util.parseCLICommand(request.command);
-            var result;
-            var handled = true;
             switch (cmd[0]) {
                 case "howto":
                     result = HOWTO;
