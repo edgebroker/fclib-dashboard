@@ -52,20 +52,12 @@
       "mandatory": false
     },
     {
-      "name": "limitvalue",
-      "label": "History Limit Time Value",
-      "description": "The limit of the history per asset.",
+      "name": "limit",
+      "label": "History Limit",
+      "description": "The limit of points in the history per asset.",
       "type": "integer",
       "min": 1,
-      "default": 1,
-      "mandatory": true
-    },
-    {
-      "name": "limitunit",
-      "label": "History Limit Time Unit",
-      "description": "The time unit for the history limit.",
-      "type": "choice",
-      "choice": ["Minutes", "Hours", "Days", "Months", "Years"],
+      "default": 20,
       "mandatory": true
     },
     {

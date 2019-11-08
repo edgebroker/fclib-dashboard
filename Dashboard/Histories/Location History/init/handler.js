@@ -17,7 +17,7 @@ function handler() {
     stream.create().output(this.streamname).topic();
 
     stream.create().memoryGroup(this.compid+"-updates", this.props["assetproperty"]).onCreate(function (key) {
-        return stream.create().memory(key+"-"+self.compid+"-updates").heap();
+        return stream.create().memory(key+"-"+self.compid+"-updates").heap().orderBy(self.orderby);
     });
 
     this.updateGroup = stream.memoryGroup(this.compid+"-updates");
@@ -58,26 +58,8 @@ function handler() {
     });
 
     function createMemory(key) {
-        stream.create().memory(key + "_" + self.compid).sharedQueue(sharedQueue).orderBy(self.orderby);
-        var mem = stream.memory(key + "_" + self.compid);
-        switch (self.props["limitunit"]){
-            case "Minutes":
-                mem.limit().time().minutes(self.props["limitvalue"]);
-                break;
-            case "Hours":
-                mem.limit().time().hours(self.props["limitvalue"]);
-                break;
-            case "Days":
-                mem.limit().time().days(self.props["limitvalue"]);
-                break;
-            case "Months":
-                mem.limit().time().months(self.props["limitvalue"]);
-                break;
-            case "Years":
-                mem.limit().time().years(self.props["limitvalue"]);
-                break;
-        }
-        return mem;
+        stream.create().memory(key + "_" + self.compid).sharedQueue(sharedQueue).orderBy(self.orderby).limit().count(self.props["limit"]);
+        return stream.memory(key + "_" + self.compid);
     }
 
     // Init Requests
