@@ -36,7 +36,7 @@ function handler() {
 
     stream.create().timer(this.compid + "_checklimit").interval().seconds(this.props["updateintervalsec"]).onTimer(function (timer) {
         // Send updates, move updates to history
-        self.send("update", self.updateGroup, stream.output(self.streamname));
+        send("update", self.updateGroup, stream.output(self.streamname));
 
         // Move updates to history
         var toClear = [];
@@ -89,7 +89,7 @@ function handler() {
         });
 
     function send(type, group, out) {
-        var initMsg = {
+        var msg = {
             msgtype: "stream",
             streamname: self.streamname,
             eventtype: type,
@@ -98,15 +98,17 @@ function handler() {
             }
         };
         group.forEach(function(mem){
-           initMsg.body.assets.push(createAsset(mem));
+           msg.body.assets.push(createAsset(mem));
         });
-        out.send(JSON.stringify(
-            stream.create().message()
-                        .textMessage()
-                        .property("streamdata").set(true)
-                        .property("streamname").set(streamName)
-                        .body(JSON.stringify(initMsg))
-        ));
+        if (msg.body.assets.length > 0) {
+            out.send(
+                stream.create().message()
+                    .textMessage()
+                    .property("streamdata").set(true)
+                    .property("streamname").set(self.streamname)
+                    .body(JSON.stringify(msg))
+            );
+        }
     }
 
     function createAsset(mem) {
