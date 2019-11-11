@@ -31,20 +31,6 @@
       "mandatory": true
     },
     {
-      "name": "longproperty",
-      "label": "Longitude Property",
-      "description": "Provide the name of the property that contains the longitude.",
-      "type": "identifier",
-      "mandatory": true
-    },
-    {
-      "name": "latproperty",
-      "label": "Latitude Property",
-      "description": "Provide the name of the property that contains the latitude.",
-      "type": "identifier",
-      "mandatory": true
-    },
-    {
       "name": "eventtimeproperty",
       "label": "Event Time Property",
       "description": "Provide the name of the property that contains the time of the event. Leave it blank to use the time at which it arrives at this component.",

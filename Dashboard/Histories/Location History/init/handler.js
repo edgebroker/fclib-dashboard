@@ -101,13 +101,7 @@ function handler() {
         mem.forEach(function(msg){
            if (asset.name === null)
                asset.name = msg.property(self.props["assetproperty"]).value().toString();
-           asset.locations.push(
-               {
-                   time: msg.property(self.orderby).value().toLong(),
-                   longitude: msg.property(self.props["longproperty"]).value().toObject(),
-                   latitude: msg.property(self.props["latproperty"]).value().toObject(),
-               }
-           )
+           asset.locations.push(JSON.parse(msg.body()));
         });
         return asset;
     }
