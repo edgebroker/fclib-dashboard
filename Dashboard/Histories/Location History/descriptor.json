@@ -31,19 +31,12 @@
       "mandatory": true
     },
     {
-      "name": "eventtimeproperty",
-      "label": "Event Time Property",
-      "description": "Provide the name of the property that contains the time of the event. Leave it blank to use the time at which it arrives at this component.",
-      "type": "identifier",
-      "mandatory": false
-    },
-    {
-      "name": "limit",
-      "label": "History Limit",
-      "description": "The limit of points in the history per asset.",
+      "name": "inactivitytimeout",
+      "label": "Inactivity Timeout Hours",
+      "description": "Number of hours of inactivity after when an asset is removed.",
       "type": "integer",
       "min": 1,
-      "default": 20,
+      "default": 10,
       "mandatory": true
     },
     {

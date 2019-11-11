@@ -10,67 +10,41 @@ function handler() {
         type : "location"
     };
 
-    this.orderby = this.props["eventtimeproperty"]?this.props["eventtimeproperty"]:"_time";
-
     stream.create().output(this.registryTopic).topic();
     stream.create().output(this.metaRegistryTopic).topic();
     stream.create().output(this.streamname).topic();
 
-    stream.create().memoryGroup(this.compid+"-updates", this.props["assetproperty"]).onCreate(function (key) {
-        return stream.create().memory(key+"-"+self.compid+"-updates").heap().orderBy(self.orderby);
-    });
-
-    this.updateGroup = stream.memoryGroup(this.compid+"-updates");
-
-    stream.create().memoryGroup(this.compid+"-history", this.props["assetproperty"]).onCreate(function (key) {
-        return createMemory(key+"-"+self.compid+"-history");
-    });
-
-    this.historyGroup = stream.memoryGroup(this.compid+"-history");
+    stream.create().memory(this.compid+"-history")
+        .sharedQueue(sharedQueue)
+        .createIndex(this.props["assetproperty"])
+        .limit()
+        .time()
+        .tumbling()
+        .hours(this.props["inactivitytimeout"]);
+    this.history = stream.memory(this.compid+"-history");
 
     this.add = function(msg) {
-        if (this.orderBy === "_time")
-           msg.property("_time").set(time.currentTime());
-       this.updateGroup.add(msg);
+        self.history.index(this.props["assetproperty"]).remove(msg.property(this.props["assetproperty"]).value().toObject());
+        self.history.add(msg)
     };
 
     stream.create().timer(this.compid + "_checklimit").interval().seconds(this.props["updateintervalsec"]).onTimer(function (timer) {
         // Send updates, move updates to history
-        send("update", self.updateGroup, stream.output(self.streamname));
-
-        // Move updates to history
-        var toClear = [];
-        self.updateGroup.forEach(function(mem){
-           mem.forEach(function(msg){
-               self.historyGroup.add(msg);
-           });
-           toClear.push(mem);
-        });
-
-        // Clear updates
-        toClear.forEach(function(mem){
-           mem.clear();
-           self.updateGroup.removeMemory(mem.name());
-        });
+        send("update", self.history, stream.output(self.streamname));
 
         // Check limit on history
-        self.historyGroup.checkLimit();
+        self.history.checkLimit();
     });
-
-    function createMemory(key) {
-        stream.create().memory(key + "_" + self.compid).sharedQueue(sharedQueue).orderBy(self.orderby).limit().count(self.props["limit"]);
-        return stream.memory(key + "_" + self.compid);
-    }
 
     // Init Requests
     stream.create().input(this.streamname).topic().selector("initrequest = true")
         .onInput(function (input) {
             var out = stream.create().output(null).forAddress(input.current().replyTo());
-            send("init", self.historyGroup, out);
+            send("init", self.history, out);
             out.close();
         });
 
-    function send(type, group, out) {
+    function send(type, mem, out) {
         var msg = {
             msgtype: "stream",
             streamname: self.streamname,
@@ -79,9 +53,10 @@ function handler() {
                 assets: []
             }
         };
-        group.forEach(function(mem){
-           msg.body.assets.push(createAsset(mem));
+        mem.forEach(function(posMsg){
+           msg.body.assets.push(JSON.parse(posMsg.body()));
         });
+
         if (msg.body.assets.length > 0) {
             out.send(
                 stream.create().message()
@@ -91,18 +66,5 @@ function handler() {
                     .body(JSON.stringify(msg))
             );
         }
-    }
-
-    function createAsset(mem) {
-        var asset = {
-            name: null,
-            locations: []
-        };
-        mem.forEach(function(msg){
-           if (asset.name === null)
-               asset.name = msg.property(self.props["assetproperty"]).value().toString();
-           asset.locations.push(JSON.parse(msg.body()));
-        });
-        return asset;
     }
 }
