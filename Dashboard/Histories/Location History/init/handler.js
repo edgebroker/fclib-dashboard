@@ -24,8 +24,10 @@ function handler() {
     this.history = stream.memory(this.compid+"-history");
 
     this.add = function(msg) {
-        self.history.index(this.props["assetproperty"]).remove(msg.property(this.props["assetproperty"]).value().toObject());
-        self.history.add(msg)
+        if (self.history.size() < self.props["maxassets"]) {
+            self.history.index(self.props["assetproperty"]).remove(msg.property(self.props["assetproperty"]).value().toObject());
+            self.history.add(msg);
+        }
     };
 
     stream.create().timer(this.compid + "_checklimit").interval().seconds(this.props["updateintervalsec"]).onTimer(function (timer) {

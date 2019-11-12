@@ -40,6 +40,15 @@
       "mandatory": true
     },
     {
+      "name": "maxassets",
+      "label": "Maximum Assets",
+      "description": "Maximum number of assets stored.",
+      "type": "integer",
+      "min": 1,
+      "default": 50,
+      "mandatory": true
+    },
+    {
       "name": "updateintervalsec",
       "label": "Update Interval Seconds",
       "description": "Interval in seconds in which the updates are sent to the dashboard component.",
