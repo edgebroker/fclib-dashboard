@@ -15,7 +15,7 @@ function handler() {
     stream.create().output(this.streamname).topic();
 
     stream.create().memory(this.compid+"-history")
-        .sharedQueue(sharedQueue)
+        .heap()
         .createIndex(this.props["assetproperty"])
         .limit()
         .time()
@@ -24,8 +24,10 @@ function handler() {
     this.history = stream.memory(this.compid+"-history");
 
     this.add = function(msg) {
-        if (self.history.size() < self.props["maxassets"]) {
+        if (self.history.size() < self.props["maxassets"] ||
+            self.history.index(self.props["assetproperty"]).get(msg.property(self.props["assetproperty"]).value().toObject()).size() > 0) {
             self.history.index(self.props["assetproperty"]).remove(msg.property(self.props["assetproperty"]).value().toObject());
+            msg.property("_dirty").set(true);
             self.history.add(msg);
         }
     };
@@ -56,7 +58,10 @@ function handler() {
             }
         };
         mem.forEach(function(posMsg){
-           msg.body.assets.push(JSON.parse(posMsg.body()));
+            if (posMsg.property("_dirty").value().toBoolean()) {
+                msg.body.assets.push(JSON.parse(posMsg.body()));
+                posMsg.property("_dirty").set(false);
+            }
         });
 
         if (msg.body.assets.length > 0) {
