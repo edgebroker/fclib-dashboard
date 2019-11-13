@@ -54,6 +54,7 @@ function handler() {
             streamname: self.streamname,
             eventtype: type,
             body: {
+                apikey: self.props["apikey"],
                 assets: []
             }
         };

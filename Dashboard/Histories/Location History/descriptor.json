@@ -24,6 +24,13 @@
       "mandatory": true
     },
     {
+      "name": "apikey",
+      "label": "Google Maps API Key",
+      "description": "Provide the API key for Google Maps.",
+      "type": "string",
+      "mandatory": true
+    },
+    {
       "name": "assetproperty",
       "label": "Asset Property",
       "description": "Provide the name of the property that contains the name of the asset to track.",
