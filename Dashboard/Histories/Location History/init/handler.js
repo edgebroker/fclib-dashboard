@@ -41,7 +41,7 @@ function handler() {
     });
 
     // Init Requests
-    stream.create().input(this.streamname).topic().selector("initrequest = true")
+    stream.create().input(this.compid + "_initrequests").topic().destinationName(this.streamname).selector("initrequest = true")
         .onInput(function (input) {
             var out = stream.create().output(null).forAddress(input.current().replyTo());
             send("init", self.history, out);
@@ -64,7 +64,7 @@ function handler() {
             }
         });
 
-        if (msg.body.assets.length > 0) {
+        if (msg.body.assets.length > 0 || type === "init") {
             out.send(
                 stream.create().message()
                     .textMessage()
