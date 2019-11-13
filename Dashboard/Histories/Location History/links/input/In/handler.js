@@ -1,5 +1,6 @@
 function handler(In) {
-    this.assertProperty(In, this.props["assetproperty"]);
+    if (!this.assertProperty(In, this.props["assetproperty"]))
+        return;
 
     var msg = stream.create().message().copyMessage(In);
     this.add(msg);
