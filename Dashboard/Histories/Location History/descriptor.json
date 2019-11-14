@@ -1,5 +1,5 @@
 {
-  "description": "Creates a history of location coordinates (long/lat) and provides it as a history dashboard stream",
+  "description": "Creates a history of assets and their last location and provides it as a location history dashboard stream. This component requires input messages with the following properties set: id, label, long, lat, timestamp, speed (optional).",
   "labelproperty": "historyname",
   "links": {
     "input": [
@@ -28,13 +28,6 @@
       "label": "Google Maps API Key",
       "description": "Provide the API key for Google Maps.",
       "type": "string",
-      "mandatory": true
-    },
-    {
-      "name": "assetproperty",
-      "label": "Asset Property",
-      "description": "Provide the name of the property that contains the name of the asset to track.",
-      "type": "identifier",
       "mandatory": true
     },
     {
