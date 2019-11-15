@@ -12,6 +12,10 @@
       {
         "name": "Out",
         "type": "message"
+      },
+      {
+        "name": "Statistic",
+        "type": "message"
       }
     ]
   },

@@ -67,6 +67,9 @@ function handler() {
                 assets: []
             }
         };
+        var driving = 0;
+        var stopped = 0;
+        var hasSpeed = false;
         mem.forEach(function(posMsg){
             if (posMsg.property("_dirty").value().toBoolean() || type === "init") {
                 var json = {
@@ -80,9 +83,23 @@ function handler() {
                     json.speed = posMsg.property("speed").value().toObject();
                 msg.body.assets.push(json);
                 posMsg.property("_dirty").set(false);
+            } else {
+                if (posMsg.property("speed").exists() &&  posMsg.property("speed").value().toDouble() > 0) {
+                    posMsg.property("speed").set(0);
+                    posMsg.property("_dirty").set(true);
+                }
+            }
+            if (posMsg.property("speed").exists()){
+                hasSpeed = true;
+                if (posMsg.property("speed").value().toDouble() > 0)
+                    driving++;
+                else
+                    stopped++;
             }
         });
 
+        var updates = msg.body.assets.length;
+        var maxAssets = self.props["maxassets"];
         if (msg.body.assets.length > 0 || type === "init") {
             out.send(
                 stream.create().message()
@@ -92,5 +109,13 @@ function handler() {
                     .body(JSON.stringify(msg))
             );
         }
+        var statMessage = stream.create().message().message();
+        statMessage.property("updates").set(updates);
+        statMessage.property("maxassets").set(maxAssets);
+        if (hasSpeed === true) {
+            statMessage.property("driving").set(driving);
+            statMessage.property("stopped").set(stopped);
+        }
+        self.executeOutputLink("Statistic", statMessage);
     }
 }
