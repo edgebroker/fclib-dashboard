@@ -44,7 +44,9 @@ function handler() {
         field("Command", WIDTH_L, ' ') + "| " + field("Description", WIDTH_R, ' '),
         field("", WIDTH_L + WIDTH_R + 2, '-'),
         field("howto", WIDTH_L, ' ') + "| " + field("How to execute commands", WIDTH_R, ' '),
-        field("help", WIDTH_L, ' ') + "| " + field("Show available commands", WIDTH_R, ' ')
+        field("help", WIDTH_L, ' ') + "| " + field("Show available commands", WIDTH_R, ' '),
+        field("getcommandmeta", WIDTH_L, ' ') + "| " + field("Returns the meta data for a command", WIDTH_R, ' '),
+        field("  <command>", WIDTH_L, ' ') + "| " + field("Command name", WIDTH_R, ' ')
     ];
 
 
@@ -109,6 +111,21 @@ function handler() {
             });
         });
         return s;
+    }
+
+    function getCommandMeta(cmd) {
+        if (cmd.length !== 2)
+            throw "Invalid number of parameters for this command: " + cmd[0];
+        var command = stream.memory(self.compid + "_commands").index("command").get(cmd[1]);
+        if (command.size() === 0)
+            throw "Command not found: " + cmd[1];
+        command = command.first();
+        var meta = {
+            command: command.property("command").value().toString(),
+            description: command.property("description").value().toString(),
+            parameters: JSON.parse(command.property("parameters").value().toString())
+        };
+        return ["Result:", JSON.stringify(meta)];
     }
 
     function field(s, length, c) {
@@ -243,6 +260,9 @@ function handler() {
                 case "help":
                     result = help();
                     break;
+                case "getcommandmeta":
+                    result = getCommandMeta(cmd);
+                    break;
                 default:
                     result = forwardCommand(cmd, cmdMsg);
                     handled = result !== null;
@@ -250,7 +270,7 @@ function handler() {
             }
         } catch (e) {
             handled = true;
-            result = ["Error:", e.getMessage()];
+            result = ["Error:", e];
         }
         if (handled) {
             msg.body.message = result;
