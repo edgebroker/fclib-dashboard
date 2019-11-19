@@ -45,8 +45,9 @@ function handler() {
         field("", WIDTH_L + WIDTH_R + 2, '-'),
         field("howto", WIDTH_L, ' ') + "| " + field("How to execute commands", WIDTH_R, ' '),
         field("help", WIDTH_L, ' ') + "| " + field("Show available commands", WIDTH_R, ' '),
+        field("getcommands", WIDTH_L, ' ') + "| " + field("Returns a JSON array with commands", WIDTH_R, ' '),
         field("getcommandmeta", WIDTH_L, ' ') + "| " + field("Returns the meta data for a command", WIDTH_R, ' '),
-        field("  <command>", WIDTH_L, ' ') + "| " + field("Command name", WIDTH_R, ' ')
+        field("  <command>", WIDTH_L, ' ') + "| " + field("  Command name", WIDTH_R, ' ')
     ];
 
 
@@ -111,6 +112,16 @@ function handler() {
             });
         });
         return s;
+    }
+
+    function getCommands(cmd) {
+        if (cmd.length !== 1)
+            throw "Invalid number of parameters for this command: " + cmd[0];
+        var result = [];
+        stream.memory(self.compid + "_commands").forEach(function (msg) {
+            result.push(msg.property("command").value().toString());
+        });
+        return ["Result:", JSON.stringify(result)];
     }
 
     function getCommandMeta(cmd) {
@@ -259,6 +270,9 @@ function handler() {
                     break;
                 case "help":
                     result = help();
+                    break;
+                case "getcommands":
+                    result = getCommands(cmd);
                     break;
                 case "getcommandmeta":
                     result = getCommandMeta(cmd);
