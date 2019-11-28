@@ -29,6 +29,18 @@
       "description": "Assign a short sentence to describe this command.",
       "type": "string",
       "mandatory": true
+    },
+    {
+      "name": "referencelabelkey",
+      "label": "Reference Label Key",
+      "description": "Item key that provides the label when referenced",
+      "type": "string"
+    },
+    {
+      "name": "referencevaluekey",
+      "label": "Reference Value Key",
+      "description": "Item key that provides the value when referenced",
+      "type": "string"
     }
   ]
 }

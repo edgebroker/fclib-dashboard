@@ -77,11 +77,16 @@ function handler() {
     this.registerCommand = function (request) {
         var command = request.property("command").value().toString();
         var description = request.property("description").value().toString();
+        var referenceLabelKey = request.property("referencelabelkey").exists() ? request.property("referencelabelkey").value().toString() : "";
+        var referenceValueKey = request.property("referencevaluekey").exists() ? request.property("referencevaluekey").value().toString() : "";
         var parms = request.property("parameters").exists() ? request.property("parameters").value().toString() : "[]";
         var msg = stream.create().message().message()
-            .property("command").set(command)
-            .property("description").set(description)
-            .property("parameters").set(parms);
+          .property("command").set(command)
+          .property("description").set(description)
+          .property("referencelabelkey").set(referenceLabelKey)
+          .property("referencevaluekey").set(referenceValueKey)
+          .property("parameters").set(parms)
+        ;
         stream.memory(self.compid + "_commands").add(msg);
     };
 
@@ -134,6 +139,8 @@ function handler() {
         var meta = {
             command: command.property("command").value().toString(),
             description: command.property("description").value().toString(),
+            reference_label_key: command.property("referencelabelkey").value().toString(),
+            reference_value_key: command.property("referencevaluekey").value().toString(),
             parameters: JSON.parse(command.property("parameters").value().toString())
         };
         return ["Result:", JSON.stringify(meta)];
