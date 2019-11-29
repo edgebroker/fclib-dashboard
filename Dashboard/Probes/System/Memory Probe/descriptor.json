@@ -1,5 +1,5 @@
 {
-  "description": "Provides memory usage as probe stream with values in this order: free, used.",
+  "description": "Provides memory usage as probe stream with values in this order: free, used, max.",
   "labelproperty": "probename",
   "links": {
     "output": [

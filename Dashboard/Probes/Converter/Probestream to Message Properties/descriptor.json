@@ -1,0 +1,37 @@
+{
+  "description": "Converts a Probestream into Message Properties. In addition to the defined properties below it sets the properties 'routername', 'probename' and 'time'",
+  "labelproperty": "probename",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "probestream"
+      }
+    ],
+    "output": [
+      {
+        "name": "Out",
+        "type": "message"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "probename",
+      "label": "Probe Name",
+      "description": "This name is set as message property 'probename'.",
+      "type": "string",
+      "mandatory": true
+    },
+    {
+      "name": "properties",
+      "label": "Properties",
+      "description": "Provide the names of the properties you want to set in the order of the values of the Probestream.",
+      "type": "array",
+      "fieldtypes": [
+        "identifier"
+      ],
+      "mandatory": true
+    }
+  ]
+}
