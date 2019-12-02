@@ -11,7 +11,7 @@ function handler() {
     };
 
     this.cpu = os.processCpuLoad();
-    this.cpuprev = 0;
+    this.cpuprev = -1;
 
     this.msg = {
         msgtype: "stream",
