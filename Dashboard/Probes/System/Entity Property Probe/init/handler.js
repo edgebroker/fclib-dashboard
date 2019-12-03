@@ -54,7 +54,7 @@ function handler() {
     }
 
     stream.create().timer(this.compid).interval().seconds(this.props["updateintervalsec"]).onTimer(function (timer) {
-        sendUpdate("update", stream.output(self.streamname), false);
+        sendUpdate("update", stream.output(self.streamname), true);
     });
 
     // Init Requests
