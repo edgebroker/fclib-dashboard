@@ -11,7 +11,6 @@ function handler() {
     };
 
     this.cpu = os.processCpuLoad();
-    this.cpuprev = 0;
 
     this.msg = {
         msgtype: "stream",
@@ -34,6 +33,7 @@ function handler() {
                 .property("streamname").set(self.streamname)
                 .body(JSON.stringify(self.msg))
         );
+        self.executeOutputLink("Out", self.msg);
     }
 
     // Init Requests
@@ -47,10 +47,7 @@ function handler() {
     // Update timer
     stream.create().timer(this.compid).interval().seconds(this.props["updateintervalsec"]).onTimer(function (timer) {
         self.cpu = os.processCpuLoad();
-        if (self.cpuprev !== self.cpu) {
-            sendUpdate("update", stream.output(self.streamname));
-            self.cpuprev = self.cpu;
-        }
+        sendUpdate("update", stream.output(self.streamname));
     });
 
     stream.create().output(this.streamname).topic();

@@ -180,7 +180,10 @@ function handler() {
     function createSeries(name, memCurrent, index) {
         var series = [name];
         memCurrent.forEach(function (message) {
-            series.push(Math.round(message.property("value" + index).value().toDouble()));
+            if (self.props["roundvalues"])
+                series.push(Math.round(message.property("value" + index).value().toDouble()));
+            else
+                series.push(message.property("value" + index).value().toDouble());
         });
         return series;
     }
@@ -208,7 +211,10 @@ function handler() {
         self.updateMsg.body.values = [message.property("time").value().toLong()];
 
         for (var i = 0; i < self.nvalues; i++) {
-            self.updateMsg.body.values.push(Math.round(message.property("value" + i).value().toDouble()));
+            if (self.props["roundvalues"])
+                self.updateMsg.body.values.push(Math.round(message.property("value" + i).value().toDouble()));
+            else
+                self.updateMsg.body.values.push(message.property("value" + i).value().toDouble());
         }
         out.send(
             stream.create().message()

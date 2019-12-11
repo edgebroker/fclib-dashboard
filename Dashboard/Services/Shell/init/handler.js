@@ -10,6 +10,7 @@ function handler() {
         type: "service"
     };
     var Util = Java.type("com.swiftmq.util.SwiftUtilities");
+    var JAVA_INTEGER = Java.type("java.lang.Integer");
     var WIDTH_L = 20;
     var WIDTH_R = 50;
     var INTEGER = /^\d+$/;
@@ -43,7 +44,10 @@ function handler() {
         field("Command", WIDTH_L, ' ') + "| " + field("Description", WIDTH_R, ' '),
         field("", WIDTH_L + WIDTH_R + 2, '-'),
         field("howto", WIDTH_L, ' ') + "| " + field("How to execute commands", WIDTH_R, ' '),
-        field("help", WIDTH_L, ' ') + "| " + field("Show available commands", WIDTH_R, ' ')
+        field("help", WIDTH_L, ' ') + "| " + field("Show available commands", WIDTH_R, ' '),
+        field("getcommands", WIDTH_L, ' ') + "| " + field("Returns a JSON array with commands", WIDTH_R, ' '),
+        field("getcommandmeta", WIDTH_L, ' ') + "| " + field("Returns the meta data for a command", WIDTH_R, ' '),
+        field("  <command>", WIDTH_L, ' ') + "| " + field("  Command name", WIDTH_R, ' ')
     ];
 
 
@@ -73,11 +77,16 @@ function handler() {
     this.registerCommand = function (request) {
         var command = request.property("command").value().toString();
         var description = request.property("description").value().toString();
+        var referenceLabelKey = request.property("referencelabelkey").exists() ? request.property("referencelabelkey").value().toString() : "";
+        var referenceValueKey = request.property("referencevaluekey").exists() ? request.property("referencevaluekey").value().toString() : "";
         var parms = request.property("parameters").exists() ? request.property("parameters").value().toString() : "[]";
         var msg = stream.create().message().message()
-            .property("command").set(command)
-            .property("description").set(description)
-            .property("parameters").set(parms);
+          .property("command").set(command)
+          .property("description").set(description)
+          .property("referencelabelkey").set(referenceLabelKey)
+          .property("referencevaluekey").set(referenceValueKey)
+          .property("parameters").set(parms)
+        ;
         stream.memory(self.compid + "_commands").add(msg);
     };
 
@@ -110,6 +119,33 @@ function handler() {
         return s;
     }
 
+    function getCommands(cmd) {
+        if (cmd.length !== 1)
+            throw "Invalid number of parameters for this command: " + cmd[0];
+        var result = [];
+        stream.memory(self.compid + "_commands").forEach(function (msg) {
+            result.push(msg.property("command").value().toString());
+        });
+        return ["Result:", JSON.stringify(result)];
+    }
+
+    function getCommandMeta(cmd) {
+        if (cmd.length !== 2)
+            throw "Invalid number of parameters for this command: " + cmd[0];
+        var command = stream.memory(self.compid + "_commands").index("command").get(cmd[1]);
+        if (command.size() === 0)
+            throw "Command not found: " + cmd[1];
+        command = command.first();
+        var meta = {
+            command: command.property("command").value().toString(),
+            description: command.property("description").value().toString(),
+            reference_label_key: command.property("referencelabelkey").value().toString(),
+            reference_value_key: command.property("referencevaluekey").value().toString(),
+            parameters: JSON.parse(command.property("parameters").value().toString())
+        };
+        return ["Result:", JSON.stringify(meta)];
+    }
+
     function field(s, length, c) {
         var res = s;
         for (var i = s.length; i < length; i++)
@@ -120,10 +156,17 @@ function handler() {
     function validate(value, parm) {
         if (!parm.validator)
             return value;
+        var converted = value;
         switch (parm.validator.type) {
             case "integer":
                 if (!INTEGER.test(value))
                     throw "Value '" + value + "' is not an valid integer!";
+                if (parm.converttotype)
+                    converted = JAVA_INTEGER.valueOf(value);
+                break;
+            case "boolean":
+                if (parm.converttotype)
+                    converted = value === "true";
                 break;
             case "identifier":
                 if (!IDENTIFIER.test(value))
@@ -145,16 +188,16 @@ function handler() {
                     throw "Value '" + value + "' is invalid! Allowed are: " + JSON.stringify(parm.validator.values);
                 break;
         }
-        return value;
+        return converted;
     }
 
     function fillParameters(cmd, parms) {
         var result = [];
+        if (cmd.length - 1 !== parms.length)
+            throw "Invalid number of parameters for this command: " + cmd[0];
         if (cmd.length === 1) {
             return result;
         }
-        if (cmd.length - 1 !== parms.length)
-            throw "Invalid number of parameters for this command: " + cmd[0];
         for (var i = 1; i < cmd.length; i++) {
             if (cmd[i] === "-") {
                 if (parms[i - 1].mandatory)
@@ -164,7 +207,6 @@ function handler() {
                 result.push({name: parms[i - 1].name, value: validate(cmd[i], parms[i - 1])});
             }
         }
-        stream.log().info(JSON.stringify(result));
         return result;
     }
 
@@ -176,7 +218,6 @@ function handler() {
         try {
             var parms = JSON.parse(stream.memory(self.compid + "_commands").index("command").get(cmd[0]).first().property("parameters").value().toString());
             var result = fillParameters(cmd, parms);
-            stream.log().info("2: "+JSON.stringify(result));
             var fwdMsg = stream.create().message().textMessage()
                 .replyTo(cmdMsg.replyTo())
                 .correlationId(cmdMsg.correlationId())
@@ -226,16 +267,22 @@ function handler() {
         };
         var id = cmdMsg.correlationId();
         var request = JSON.parse(cmdMsg.body());
+        var result;
+        var handled = true;
         try {
             var cmd = Util.parseCLICommand(request.command);
-            var result;
-            var handled = true;
             switch (cmd[0]) {
                 case "howto":
                     result = HOWTO;
                     break;
                 case "help":
                     result = help();
+                    break;
+                case "getcommands":
+                    result = getCommands(cmd);
+                    break;
+                case "getcommandmeta":
+                    result = getCommandMeta(cmd);
                     break;
                 default:
                     result = forwardCommand(cmd, cmdMsg);
@@ -244,7 +291,7 @@ function handler() {
             }
         } catch (e) {
             handled = true;
-            result = ["Error:", e.getMessage()];
+            result = ["Error:", e];
         }
         if (handled) {
             msg.body.message = result;

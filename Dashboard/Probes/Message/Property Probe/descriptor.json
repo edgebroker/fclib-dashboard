@@ -42,6 +42,14 @@
         "string"
       ],
       "mandatory": true
+    },
+    {
+      "name": "converttointeger",
+      "label": "Convert to Integer",
+      "description": "Convert the values to integer or use the numbers with decimals as is.",
+      "type": "boolean",
+      "default": true,
+      "mandatory": true
     }
   ]
 }

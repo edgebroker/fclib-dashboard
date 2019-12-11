@@ -7,7 +7,7 @@ function handler(In) {
         var value = In.property(p[i]).value().toString();
         if (value.indexOf(",") !== 0)
             In.property(p[i]).set(value.replace(/,/g,""));
-        value = In.property(p[i]).value().toLong();
+        value = this.props["converttointeger"]?In.property(p[i]).value().toLong():In.property(p[i]).value().toDouble();
         if (this.msg.body.values[i] !== value) {
             this.msg.body.values[i] = value;
             changed = true;

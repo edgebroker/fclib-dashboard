@@ -1,0 +1,65 @@
+{
+  "description": "Creates a history of assets and their last location and provides it as a location history dashboard stream. This component requires input messages with the following properties set: id, label, long, lat, timestamp, speed (optional).",
+  "labelproperty": "historyname",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "message"
+      }
+    ],
+    "output": [
+      {
+        "name": "Out",
+        "type": "message"
+      },
+      {
+        "name": "Statistic",
+        "type": "message"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "historyname",
+      "label": "History Name",
+      "description": "Assign a name to this history to identify the stream to assign it to a dashboard component.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "apikey",
+      "label": "Google Maps API Key",
+      "description": "Provide the API key for Google Maps.",
+      "type": "string",
+      "mandatory": true
+    },
+    {
+      "name": "inactivitytimeout",
+      "label": "Inactivity Timeout Hours",
+      "description": "Number of hours of inactivity after when an asset is removed.",
+      "type": "integer",
+      "min": 1,
+      "default": 10,
+      "mandatory": true
+    },
+    {
+      "name": "maxassets",
+      "label": "Maximum Assets",
+      "description": "Maximum number of assets stored.",
+      "type": "integer",
+      "min": 1,
+      "default": 50,
+      "mandatory": true
+    },
+    {
+      "name": "updateintervalsec",
+      "label": "Update Interval Seconds",
+      "description": "Interval in seconds in which the updates are sent to the dashboard component.",
+      "type": "integer",
+      "min": 1,
+      "default": 10,
+      "mandatory": true
+    }
+  ]
+}
