@@ -1,0 +1,76 @@
+{
+  "description": "Analyzes a process by tracking a process property (i.e. an orderid) over multiple process stages. It automatically creates a process model and serves as input component for the Process Visualizer dashboard component.",
+  "labelproperty": "processname",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "message"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "processname",
+      "label": "Process Name",
+      "description": "Specify the name of the process.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "processproperty",
+      "label": "Process Property",
+      "description": "Specify the name of the property that identifies the business object, i.e. orderid.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "stageproperty",
+      "label": "Stage Property",
+      "description": "Specify the name of the property which contains the name of the stage to which an input message will be assigned.",
+      "type": "identifier",
+      "default": "stage"
+    },
+    {
+      "name": "processendstages",
+      "label": "Process End Stages",
+      "description": "Specify the names of the stages that mark the end of the process.",
+      "type": "array",
+      "fieldtypes": [
+        "string"
+      ]
+    },
+    {
+      "name": "kpis",
+      "label": "Key Performance Indicators (KPI)",
+      "description": "Provide the KPI properties contained in the input messages.",
+      "mandatory": false,
+      "type": "table",
+      "tablefields": [
+        {
+          "name": "propertyname",
+          "label": "Property Name",
+          "description": "Provide the property name.",
+          "mandatory": true,
+          "type": "identifier"
+        },
+        {
+          "name": "label",
+          "label": "Label",
+          "description": "Provide the label for this KPI.",
+          "mandatory": true,
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "updateintervalsec",
+      "label": "Update Interval Seconds",
+      "description": "Interval in seconds in which the updates are sent to the dashboard component.",
+      "type": "integer",
+      "min": 1,
+      "default": 10,
+      "mandatory": true
+    }
+  ]
+}
