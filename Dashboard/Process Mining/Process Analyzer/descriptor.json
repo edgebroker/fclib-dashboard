@@ -32,6 +32,15 @@
       "default": "stage"
     },
     {
+      "name": "processstartstages",
+      "label": "Process Start Stages",
+      "description": "Specify the names of the stages that mark the start of the process. Only those processed are respected that start with one of these stages. Add these to ensure to have only complete processes in the model.",
+      "type": "array",
+      "fieldtypes": [
+        "string"
+      ]
+    },
+    {
       "name": "processendstages",
       "label": "Process End Stages",
       "description": "Specify the names of the stages that mark the end of the process.",

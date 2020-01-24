@@ -33,7 +33,7 @@ function handler() {
         links: {},
         paths: {}
     };
-
+    var uniquePaths = [];
     var dirty = false;
 
     for (var i = 0; i < self.props["kpis"].length; i++) {
@@ -62,8 +62,8 @@ function handler() {
             out.close();
         });
 
-    stream.create().timer(this.compid+"_at_the_minute_starter").next().beginOfMinute().onTimer(function (t) {
-        stream.create().timer(self.compid+"_update").interval().seconds(self.updateIntervalSec).onTimer(function (timer) {
+    stream.create().timer(this.compid + "_at_the_minute_starter").next().beginOfMinute().onTimer(function (t) {
+        stream.create().timer(self.compid + "_update").interval().seconds(self.updateIntervalSec).onTimer(function (timer) {
             if (dirty) {
                 generateAllPaths();
                 sendUpdate();
@@ -73,7 +73,6 @@ function handler() {
     });
 
     function sendUpdate() {
-        stream.log().info("Send Update: "+JSON.stringify(data,null,2));
         self.msg.eventtype = "update";
         self.msg.body.time = time.currentTime();
         self.msg.body.data = data;
@@ -88,14 +87,22 @@ function handler() {
 
     // Adds a message to the model
     this.addMessage = function (message) {
-        if (!self.assertProperty(message, self.props["processproperty"]))
+        if (!self.assertProperty(message, self.props["processproperty"])) {
+            stream.log().error("Missing: " + message);
             return;
+        }
         if (!self.assertProperty(message, self.props["stageproperty"]))
             return;
         var msg = stream.create().message().message();
+        var key = message.property(self.props["processproperty"]).value().toObject();
         var stageName = message.property(self.props["stageproperty"]).value().toObject();
+        if (!startedOrValidStartStage(key, stageName)) {
+            stream.log().info("processProp: " + key +": Not a valid start stage: " + stageName);
+            return;
+        }
+        stream.log().info("processProp: " + key + ", stage=" + stageName);
         msg.property(CHECKINTIME).set(time.currentTime());
-        msg.property(self.props["processproperty"]).set(message.property(self.props["processproperty"]).value().toObject());
+        msg.property(self.props["processproperty"]).set(key);
         msg.property(self.props["stageproperty"]).set(stageName);
         for (var i = 0; i < self.props["kpis"].length; i++) {
             if (!self.assertProperty(message, self.props["kpis"][i]["propertyname"]))
@@ -103,17 +110,41 @@ function handler() {
             msg.property(self.props["kpis"][i]["propertyname"]).set(message.property(self.props["kpis"][i]["propertyname"]).value().toObject());
         }
         processMessage(msg);
-        if (isProcessEnd(stageName)){
+        if (isProcessEnd(stageName)) {
             msg.property(self.props["stageproperty"]).set(PROCESSEND);
             processMessage(msg);
         }
         dirty = true;
     };
 
+    // Checks whether a process with that key has already been started or
+    // whether the stage is a valid start stage (if those are defined)
+    function startedOrValidStartStage(key, stageName) {
+
+        // No start stages defined, accept everything
+        if (self.props["processstartstages"].length === 0)
+            return true;
+
+        // Check if already started
+        for (var stage in data.stages) {
+            if (!(stage === PROCESSSTART || stage === PROCESSEND) &&
+                stream.memory(MEMPREFIX + stage).index(self.props["processproperty"]).get(key).size() > 0)
+                return true;
+        }
+
+        // Not started, accept start stages only
+        for (var i = 0; i < self.props["processstartstages"].length; i++) {
+            if (stageName === self.props["processstartstages"][i])
+                return true;
+        }
+
+        return false;
+    }
+
     // Process a message = checkout of the previous, checkin to the current stage, create / update the link
     function processMessage(message) {
         var source = checkoutStage(message);
-        var target = checkinStage(message.property(self.props["stageproperty"]).value().toString(), message);
+        var target = checkinStage(message.property(self.props["stageproperty"]).value().toString(), message, source.path);
         processLink(source, target, message);
     }
 
@@ -169,17 +200,25 @@ function handler() {
         }
         var rc;
         if (!prevMessage) {
-            checkinStage(PROCESSSTART, message);
+            checkinStage(PROCESSSTART, message, []);
             rc = checkoutStage(message);
-        } else
-            rc = {stage: prevStage, time: checkinTime};
+        } else {
+            var path = [];
+            if (prevMessage.property("path").exists())
+                path = JSON.parse(prevMessage.property("path").value().toString());
+            rc = {stage: prevStage, time: checkinTime, path: path};
+        }
         return rc;
     }
 
     // checks a message into a stage
-    function checkinStage(name, message) {
+    function checkinStage(name, message, path) {
         var processprop = self.props["processproperty"];
         ensureStage(name, processprop);
+
+        path.push(name);
+        message.property("path").set(JSON.stringify(path));
+        maintainUniquePaths(path);
 
         var stage = data.stages[name];
         stage[TOTALCOUNT]++;
@@ -191,6 +230,32 @@ function handler() {
         if (name !== PROCESSEND)
             stream.memory(MEMPREFIX + name).add(message);
         return {stage: name, time: message.property(CHECKINTIME).value().toLong()};
+    }
+
+    // Maintains the unique paths
+    function maintainUniquePaths(path) {
+        var found = false;
+        for (var i = 0; i < uniquePaths.length; i++) {
+            if (samePath(path, uniquePaths[i].path)) {
+                if (path.length > uniquePaths[i].path.length) {
+                    uniquePaths[i].path = path.slice(0);
+                }
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+            uniquePaths.push({path: path.slice(0)});
+    }
+
+    // Checks whether both paths are equal
+    function samePath(a, b) {
+        var to = Math.min(a.length, b.length);
+        for (var i = 0; i < to; i++) {
+            if (a[i] !== b[i])
+                return false;
+        }
+        return true;
     }
 
     // Ensures that a stage exists
@@ -218,7 +283,7 @@ function handler() {
 
     // Checks whether a stage is marked as Process End
     function isProcessEnd(stageName) {
-        for (var i=0;i<self.props["processendstages"].length; i++) {
+        for (var i = 0; i < self.props["processendstages"].length; i++) {
             if (stageName === self.props["processendstages"][i])
                 return true;
         }
@@ -227,61 +292,45 @@ function handler() {
 
     // Generates all paths
     function generateAllPaths() {
-        var result = [];
-        var current = [];
-        collectPaths(PROCESSSTART, current, result);
+        var start = time.currentTime();
+        var result = uniquePaths;
         data.paths = {};
         for (var i = 0; i < self.props["kpis"].length; i++) {
             var kpi = self.props["kpis"][i].label;
             var intermediate = [];
-            result.forEach(function(p) {
+            result.forEach(function (p) {
                 intermediate.push(weightKpiPath(kpi, p.path));
             });
-            data.paths[kpi] = intermediate.sort(function(a, b){
+            data.paths[kpi] = intermediate.sort(function (a, b) {
                 return b.weight - a.weight;
             })
         }
         var intermediateTotal = [];
-        result.forEach(function(p) {
+        result.forEach(function (p) {
             intermediateTotal.push(weightTotalPath(p.path));
         });
-        data.paths[TOTALCOUNT] = intermediateTotal.sort(function(a, b){
+
+        data.paths[TOTALCOUNT] = intermediateTotal.sort(function (a, b) {
             return b.weight - a.weight;
         });
+        stream.log().info("unique paths=" + uniquePaths.length + ", time=" + (time.currentTime() - start));
     }
 
     // Weight the KPI paths
     function weightKpiPath(kpi, path) {
-        var inputValue = data.stages[path[0]].kpis[kpi].raw.total;
-        var outputValue;
-        if (path[path.length-1] === PROCESSEND)
-            outputValue = data.stages[path[path.length-2]].kpis[kpi].raw.total;
-        else
-            outputValue = data.stages[path[path.length-1]].kpis[kpi].raw.total;
-        return {weight: Math.round(outputValue/inputValue*100), path: path.slice(0)}
+        var sum = 0;
+        for (var i = 0; i < path.length; i++) {
+            sum += data.stages[path[i]].kpis[kpi].raw.total;
+        }
+        return {weight: Math.round(sum / path.length), path: path.slice(0)};
     }
 
     // Weight the totalcount paths
     function weightTotalPath(path) {
-        var inputValue = data.stages[path[0]][TOTALCOUNT];
-        var outputValue;
-        if (path[path.length-1] === PROCESSEND)
-            outputValue = data.stages[path[path.length-2]][TOTALCOUNT];
-        else
-            outputValue = data.stages[path[path.length-1]][TOTALCOUNT];
-        return {weight: Math.round(outputValue/inputValue*100), path: path.slice(0)}
-    }
-
-    // Collect all possible paths (recursive)
-    function collectPaths(node, current, result) {
-        current.push(node);
-        for (var subnode in data.links[node]) {
-            if (data.links[subnode])
-                collectPaths(subnode, current.slice(0), result);
-            else {
-                current.push(subnode);
-                result.push({path: current});
-            }
+        var sum = 0;
+        for (var i = 0; i < path.length; i++) {
+            sum += data.stages[path[i]][TOTALCOUNT];
         }
+        return {weight: Math.round(sum / path.length), path: path.slice(0)};
     }
 }
