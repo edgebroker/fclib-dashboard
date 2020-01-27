@@ -21,6 +21,7 @@ function handler() {
 
     var MEMPREFIX = this.compid + "_stage_";
     var PROCESSSTART = "Process Start";
+    var PROCESSEXPIRED = "Process Expired";
     var PROCESSEND = "Process End";
     var CHECKINTIME = "_checkintime";
     var TOTALCOUNT = "_totalcount";
@@ -35,6 +36,7 @@ function handler() {
     };
     var uniquePaths = [];
     var dirty = false;
+    var expirationMS;
 
     for (var i = 0; i < self.props["kpis"].length; i++) {
         data.kpis.push(self.props["kpis"][i].label);
@@ -85,6 +87,58 @@ function handler() {
         );
     }
 
+    // Expiration Timer
+    if (this.props["stageexpirationvalue"] > 0) {
+        var expirationValue = this.props["stageexpirationvalue"];
+        switch (this.props["stageexpirationunit"]) {
+            case "Seconds":
+                stream.create().timer(this.compid + "_expiration").interval().seconds(1).onTimer(checkExpiredStages);
+                expirationMS = expirationValue * 1000;
+                break;
+            case "Minutes":
+                stream.create().timer(this.compid + "_expiration").interval().seconds(30).onTimer(checkExpiredStages);
+                expirationMS = expirationValue * 60 * 1000;
+                break;
+            case "Hours":
+                stream.create().timer(this.compid + "_expiration").interval().minutes(10).onTimer(checkExpiredStages);
+                expirationMS = expirationValue * 60 * 60 * 1000;
+                break;
+            case "Days":
+                stream.create().timer(this.compid + "_expiration").interval().hours(1).onTimer(checkExpiredStages);
+                expirationMS = expirationValue * 60 * 60 * 24 * 1000;
+                break;
+            case "Months":
+                stream.create().timer(this.compid + "_expiration").interval().days(1).onTimer(checkExpiredStages);
+                expirationMS = expirationValue * 60 * 60 * 24 * 30 * 1000;
+                break;
+        }
+    }
+
+    function checkExpiredStages(timer) {
+        var result = [];
+        var timeout = time.currentTime() - expirationMS;
+        for (var stage in data.stages) {
+            if (!(stage === PROCESSSTART || stage === PROCESSEXPIRED || stage === PROCESSEND)) {
+                stream.log().info("checkExpiredStages: "+stage+", time: "+timeout);
+                stream.memory(MEMPREFIX + stage).select(CHECKINTIME+" < "+ timeout).forEach(function(msg){
+                    result.push(msg);
+                });
+            }
+        }
+        stream.log().info("results: "+result.length);
+        for (var i=0;i<result.length;i++){
+            moveViaProcessExpiredToEnd(result[i]);
+        }
+    }
+
+    function moveViaProcessExpiredToEnd(message) {
+        stream.log().info("moveViaProcessExpiredToEnd: "+message.property(self.props["processproperty"]).value().toObject());
+        message.property(self.props["stageproperty"]).set(PROCESSEXPIRED);
+        processMessage(message);
+        message.property(self.props["stageproperty"]).set(PROCESSEND);
+        processMessage(message);
+    }
+
     // Adds a message to the model
     this.addMessage = function (message) {
         if (!self.assertProperty(message, self.props["processproperty"])) {
@@ -97,7 +151,7 @@ function handler() {
         var key = message.property(self.props["processproperty"]).value().toObject();
         var stageName = message.property(self.props["stageproperty"]).value().toObject();
         if (!startedOrValidStartStage(key, stageName)) {
-            stream.log().info("processProp: " + key +": Not a valid start stage: " + stageName);
+            stream.log().info("processProp: " + key + ": Not a valid start stage: " + stageName);
             return;
         }
         stream.log().info("processProp: " + key + ", stage=" + stageName);
@@ -303,7 +357,9 @@ function handler() {
             });
             data.paths[kpi] = intermediate.sort(function (a, b) {
                 return b.weight - a.weight;
-            })
+            });
+            if (data.paths[kpi].length > self.props["maxpaths"])
+                data.paths[kpi] = data.paths[kpi].slice(0, self.props["maxpaths"]);
         }
         var intermediateTotal = [];
         result.forEach(function (p) {
@@ -313,14 +369,17 @@ function handler() {
         data.paths[TOTALCOUNT] = intermediateTotal.sort(function (a, b) {
             return b.weight - a.weight;
         });
+        if (data.paths[TOTALCOUNT].length > self.props["maxpaths"])
+            data.paths[TOTALCOUNT] = data.paths[TOTALCOUNT].slice(0, self.props["maxpaths"]);
+        stream.log().info(JSON.stringify(data.paths, 0, 2));
         stream.log().info("unique paths=" + uniquePaths.length + ", time=" + (time.currentTime() - start));
     }
 
     // Weight the KPI paths
     function weightKpiPath(kpi, path) {
         var sum = 0;
-        for (var i = 0; i < path.length; i++) {
-            sum += data.stages[path[i]].kpis[kpi].raw.total;
+        for (var i = 0; i < path.length-1; i++) {
+            sum += data.links[path[i]][path[i+1]].kpis[kpi].raw.total;
         }
         return {weight: Math.round(sum / path.length), path: path.slice(0)};
     }
@@ -328,8 +387,8 @@ function handler() {
     // Weight the totalcount paths
     function weightTotalPath(path) {
         var sum = 0;
-        for (var i = 0; i < path.length; i++) {
-            sum += data.stages[path[i]][TOTALCOUNT];
+        for (var i = 0; i < path.length-1; i++) {
+            sum += data.links[path[i]][path[i+1]][TOTALCOUNT];
         }
         return {weight: Math.round(sum / path.length), path: path.slice(0)};
     }

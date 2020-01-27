@@ -34,7 +34,7 @@
     {
       "name": "processstartstages",
       "label": "Process Start Stages",
-      "description": "Specify the names of the stages that mark the start of the process. Only those processed are respected that start with one of these stages. Add these to ensure to have only complete processes in the model.",
+      "description": "Specify the names of the stages that mark the start of the process. Only those processes are respected that start with one of these stages. Add these to ensure to have only complete processes in the model.",
       "type": "array",
       "fieldtypes": [
         "string"
@@ -71,6 +71,45 @@
           "type": "string"
         }
       ]
+    },
+    {
+      "name": "stageexpirationvalue",
+      "label": "Stage Expiration Value",
+      "description": "A process will expire after this time at a stage and is being moved to Process End. 0 means no expiration",
+      "type": "integer",
+      "min": 0,
+      "default": 0,
+      "mandatory": false
+    },
+    {
+      "name": "stageexpirationunit",
+      "label": "Stage Expiration Unit",
+      "description": "Time unit for stage expiration.",
+      "type": "choice",
+      "choice": [
+        "Seconds",
+        "Minutes",
+        "Hours",
+        "Days",
+        "Months"
+      ],
+      "default": "Minutes",
+      "mandatory": false
+    },
+    {
+      "name": "maxpaths",
+      "label": "Maximum different Paths",
+      "description": "The number of maximum determined different paths sent to the dashboard component needs to be limited.",
+      "type": "choice",
+      "choice": [
+        "10",
+        "20",
+        "30",
+        "40",
+        "50"
+      ],
+      "default": "20",
+      "mandatory": true
     },
     {
       "name": "updateintervalsec",
