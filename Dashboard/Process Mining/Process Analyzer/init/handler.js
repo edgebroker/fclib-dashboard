@@ -34,6 +34,8 @@ function handler() {
         links: {},
         paths: {}
     };
+
+    var updates;
     var uniquePaths = [];
     var dirty = false;
     var expirationMS;
@@ -41,6 +43,8 @@ function handler() {
     for (var i = 0; i < self.props["kpis"].length; i++) {
         data.kpis.push(self.props["kpis"][i].label);
     }
+
+    newUpdateSet();
 
     stream.create().output(this.registryTopic).topic();
     stream.create().output(this.metaRegistryTopic).topic();
@@ -62,6 +66,7 @@ function handler() {
                     .body(JSON.stringify(self.msg))
             );
             out.close();
+            stream.log().info(JSON.stringify(data, null, 2));
         });
 
     stream.create().timer(this.compid + "_at_the_minute_starter").next().beginOfMinute().onTimer(function (t) {
@@ -74,10 +79,27 @@ function handler() {
         }).start();
     });
 
+    function newUpdateSet(){
+        updates = {
+            stages: {
+                add: {},
+                remove: [],
+                update: {}
+            },
+            links: {
+                add: {},
+                remove: [],
+                update: {}
+            },
+            paths: {}
+        }
+    }
+
     function sendUpdate() {
+        updates.paths = data.paths;
         self.msg.eventtype = "update";
         self.msg.body.time = time.currentTime();
-        self.msg.body.data = data;
+        self.msg.body.data = updates;
         stream.output(self.streamname).send(
             stream.create().message()
                 .textMessage()
@@ -85,6 +107,8 @@ function handler() {
                 .property("streamname").set(self.streamname)
                 .body(JSON.stringify(self.msg))
         );
+        stream.log().info(JSON.stringify(updates, null, 2));
+        newUpdateSet();
     }
 
     // Expiration Timer
@@ -125,7 +149,6 @@ function handler() {
                 });
             }
         }
-        stream.log().info("results: "+result.length);
         for (var i=0;i<result.length;i++){
             moveViaProcessExpiredToEnd(result[i]);
         }
@@ -210,6 +233,10 @@ function handler() {
         for (var i = 0; i < self.props["kpis"].length; i++) {
             data.links[source.stage][target.stage].kpis[self.props["kpis"][i]["label"]].raw.total += message.property(self.props["kpis"][i]["propertyname"]).value().toObject();
         }
+        var linkCopy = JSON.parse(JSON.stringify(data.links[source.stage][target.stage]));
+        if (!updates.links.update[source.stage])
+            updates.links.update[source.stage] = {};
+        updates.links.update[source.stage][target.stage] = linkCopy;
     }
 
     // Ensures that a link exists
@@ -229,6 +256,7 @@ function handler() {
                     }
                 };
             }
+            updates.links.add[source.stage] = JSON.parse(JSON.stringify(data.links[source.stage]));
         }
     }
 
@@ -249,6 +277,7 @@ function handler() {
                 for (var i = 0; i < self.props["kpis"].length; i++) {
                     data.stages[prevStage].kpis[self.props["kpis"][i]["label"]].raw.current -= prevMessage.property(self.props["kpis"][i]["propertyname"]).value().toObject();
                 }
+                updates.stages.update[key] = JSON.parse(JSON.stringify(data.stages[key]));
                 break;
             }
         }
@@ -268,7 +297,7 @@ function handler() {
     // checks a message into a stage
     function checkinStage(name, message, path) {
         var processprop = self.props["processproperty"];
-        ensureStage(name, processprop);
+        var isUpdate = !ensureStage(name, processprop);
 
         path.push(name);
         message.property("path").set(JSON.stringify(path));
@@ -283,6 +312,8 @@ function handler() {
         }
         if (name !== PROCESSEND)
             stream.memory(MEMPREFIX + name).add(message);
+        if (isUpdate)
+            updates.stages.update[name] = JSON.parse(JSON.stringify(stage));
         return {stage: name, time: message.property(CHECKINTIME).value().toLong()};
     }
 
@@ -332,7 +363,10 @@ function handler() {
             data.stages[name] = stage;
             if (name !== PROCESSEND)
                 stream.create().memory(MEMPREFIX + name).heap().createIndex(processprop);
+            updates.stages.add[name] = JSON.parse(JSON.stringify(stage));
+            return true;
         }
+        return false;
     }
 
     // Checks whether a stage is marked as Process End
@@ -371,7 +405,6 @@ function handler() {
         });
         if (data.paths[TOTALCOUNT].length > self.props["maxpaths"])
             data.paths[TOTALCOUNT] = data.paths[TOTALCOUNT].slice(0, self.props["maxpaths"]);
-        stream.log().info(JSON.stringify(data.paths, 0, 2));
         stream.log().info("unique paths=" + uniquePaths.length + ", time=" + (time.currentTime() - start));
     }
 
