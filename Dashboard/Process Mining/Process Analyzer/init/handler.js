@@ -92,7 +92,8 @@ function handler() {
                 update: {}
             },
             paths: {}
-        }
+        };
+        updates.paths[TOTALCOUNT] = [];
     }
 
     function sendUpdate() {
