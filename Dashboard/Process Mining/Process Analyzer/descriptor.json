@@ -6,6 +6,10 @@
       {
         "name": "In",
         "type": "message"
+      },
+      {
+        "name": "Reset",
+        "type": "timer"
       }
     ]
   },

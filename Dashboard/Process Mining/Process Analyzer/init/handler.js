@@ -79,7 +79,7 @@ function handler() {
         }).start();
     });
 
-    function newUpdateSet(){
+    function newUpdateSet() {
         updates = {
             stages: {
                 add: {},
@@ -88,7 +88,7 @@ function handler() {
             },
             links: {
                 add: {},
-                remove: [],
+                remove: {},
                 update: {}
             },
             paths: {}
@@ -143,24 +143,42 @@ function handler() {
         var timeout = time.currentTime() - expirationMS;
         for (var stage in data.stages) {
             if (!(stage === PROCESSSTART || stage === PROCESSEXPIRED || stage === PROCESSEND)) {
-                stream.log().info("checkExpiredStages: "+stage+", time: "+timeout);
-                stream.memory(MEMPREFIX + stage).select(CHECKINTIME+" < "+ timeout).forEach(function(msg){
+                stream.log().info("checkExpiredStages: " + stage + ", time: " + timeout);
+                stream.memory(MEMPREFIX + stage).select(CHECKINTIME + " < " + timeout).forEach(function (msg) {
                     result.push(msg);
                 });
             }
         }
-        for (var i=0;i<result.length;i++){
+        for (var i = 0; i < result.length; i++) {
             moveViaProcessExpiredToEnd(result[i]);
         }
     }
 
     function moveViaProcessExpiredToEnd(message) {
-        stream.log().info("moveViaProcessExpiredToEnd: "+message.property(self.props["processproperty"]).value().toObject());
+        stream.log().info("moveViaProcessExpiredToEnd: " + message.property(self.props["processproperty"]).value().toObject());
         message.property(self.props["stageproperty"]).set(PROCESSEXPIRED);
         processMessage(message);
         message.property(self.props["stageproperty"]).set(PROCESSEND);
         processMessage(message);
     }
+
+    // Removes all data from the model
+    this.resetModel = function () {
+        stream.log().info("Reset model!");
+        newUpdateSet();
+        for (var stage in data.stages) {
+            if (!(stage === PROCESSSTART || stage === PROCESSEND))
+                stream.memory(MEMPREFIX + stage).clear().close();
+            updates.stages.remove.push(stage);
+        }
+        updates.links.remove = data.links;
+        data.stages = {};
+        data.links = {};
+        data.paths = {};
+        uniquePaths = [];
+        sendUpdate();
+        dirty = false;
+    };
 
     // Adds a message to the model
     this.addMessage = function (message) {
@@ -411,8 +429,8 @@ function handler() {
     // Weight the KPI paths
     function weightKpiPath(kpi, path) {
         var sum = 0;
-        for (var i = 0; i < path.length-1; i++) {
-            sum += data.links[path[i]][path[i+1]].kpis[kpi].raw.total;
+        for (var i = 0; i < path.length - 1; i++) {
+            sum += data.links[path[i]][path[i + 1]].kpis[kpi].raw.total;
         }
         return {weight: Math.round(sum / path.length), path: path.slice(0)};
     }
@@ -420,8 +438,8 @@ function handler() {
     // Weight the totalcount paths
     function weightTotalPath(path) {
         var sum = 0;
-        for (var i = 0; i < path.length-1; i++) {
-            sum += data.links[path[i]][path[i+1]][TOTALCOUNT];
+        for (var i = 0; i < path.length - 1; i++) {
+            sum += data.links[path[i]][path[i + 1]][TOTALCOUNT];
         }
         return {weight: Math.round(sum / path.length), path: path.slice(0)};
     }
