@@ -29,6 +29,10 @@ function handler() {
     var DELAY = "_delaysum";
 
     var data = {
+        model: {
+            start: 0,
+            end: 0
+        },
         kpis: [],
         stages: {},
         links: {},
@@ -97,6 +101,7 @@ function handler() {
     }
 
     function sendUpdate() {
+        updates.model = data.model;
         updates.paths = data.paths;
         self.msg.eventtype = "update";
         self.msg.body.time = time.currentTime();
@@ -173,6 +178,8 @@ function handler() {
             updates.stages.remove.push(stage);
         }
         updates.links.remove = data.links;
+        data.model.start = 0;
+        data.model.end = 0;
         data.stages = {};
         data.links = {};
         data.paths = {};
@@ -197,6 +204,11 @@ function handler() {
             return;
         }
         stream.log().info("processProp: " + key + ", stage=" + stageName);
+
+        if (data.model.start === 0)
+            data.model.start = time.currentTime();
+        data.model.end = time.currentTime();
+
         msg.property(CHECKINTIME).set(time.currentTime());
         msg.property(self.props["processproperty"]).set(key);
         msg.property(self.props["stageproperty"]).set(stageName);
@@ -411,8 +423,6 @@ function handler() {
             data.paths[kpi] = intermediate.sort(function (a, b) {
                 return b.weight - a.weight;
             });
-            if (data.paths[kpi].length > self.props["maxpaths"])
-                data.paths[kpi] = data.paths[kpi].slice(0, self.props["maxpaths"]);
         }
         var intermediateTotal = [];
         result.forEach(function (p) {
@@ -422,8 +432,6 @@ function handler() {
         data.paths[TOTALCOUNT] = intermediateTotal.sort(function (a, b) {
             return b.weight - a.weight;
         });
-        if (data.paths[TOTALCOUNT].length > self.props["maxpaths"])
-            data.paths[TOTALCOUNT] = data.paths[TOTALCOUNT].slice(0, self.props["maxpaths"]);
         stream.log().info("unique paths=" + uniquePaths.length + ", time=" + (time.currentTime() - start));
     }
 

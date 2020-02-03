@@ -101,21 +101,6 @@
       "mandatory": false
     },
     {
-      "name": "maxpaths",
-      "label": "Maximum different Paths",
-      "description": "The number of maximum determined different paths sent to the dashboard component needs to be limited.",
-      "type": "choice",
-      "choice": [
-        "10",
-        "20",
-        "30",
-        "40",
-        "50"
-      ],
-      "default": "20",
-      "mandatory": true
-    },
-    {
       "name": "updateintervalsec",
       "label": "Update Interval Seconds",
       "description": "Interval in seconds in which the updates are sent to the dashboard component.",
