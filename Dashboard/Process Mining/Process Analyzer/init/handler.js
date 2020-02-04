@@ -8,6 +8,23 @@ function handler() {
         label: stream.fullyQualifiedName().replace(/\./g, "/") + "/Process/" + this.props["processname"],
         type: "process"
     };
+    this.shellstreamname = "stream_" + stream.routerName() + "_" + stream.fullyQualifiedName().replace(/\./g, "_") + "_shell_snapshot_" + this.props["processname"];
+    this.shellstreammeta = {
+        name: stream.fullyQualifiedName().replace(/\./g, "_") + "_shell_snapshot_" + this.props["processname"],
+        label: stream.fullyQualifiedName().replace(/\./g, "/") + "/Shell/Snapshot/" + this.props["processname"],
+        type: "service"
+    };
+    var WIDTH_L = 20;
+    var WIDTH_R = 50;
+    var shellCommands = [
+        "Result:",
+        field("Command", WIDTH_L, ' ') + "| " + field("Description", WIDTH_R, ' '),
+        field("", WIDTH_L + WIDTH_R + 2, '-'),
+        field("help", WIDTH_L, ' ') + "| " + field("Show available commands", WIDTH_R, ' '),
+        field("getsnapshot", WIDTH_L, ' ') + "| " + field("Returns a snapshot", WIDTH_R, ' '),
+        field("  <time>", WIDTH_L, ' ') + "| " + field("  Time", WIDTH_R, ' ')
+    ];
+
     this.updateIntervalSec = this.props["updateintervalsec"];
     this.msg = {
         msgtype: "stream",
@@ -19,6 +36,7 @@ function handler() {
         }
     };
 
+    var Util = Java.type("com.swiftmq.util.SwiftUtilities");
     var MEMPREFIX = this.compid + "_stage_";
     var PROCESSSTART = "Process Start";
     var PROCESSEXPIRED = "Process Expired";
@@ -27,11 +45,19 @@ function handler() {
     var TOTALCOUNT = "_totalcount";
     var CURRENTCOUNT = "_currentcount";
     var DELAY = "_delaysum";
+    var HISTORYMEM = this.compid + "_modelhistory";
+    var SNAPSHOTTIMEPROP = "_snapshottime";
+    var SHAREDQUEUE = this.flowcontext.getFlowQueue();
 
     var data = {
         model: {
             start: 0,
             end: 0
+        },
+        history: {
+            start: 0,
+            end: 0 ,
+            interval: 15
         },
         kpis: [],
         stages: {},
@@ -102,6 +128,7 @@ function handler() {
 
     function sendUpdate() {
         updates.model = data.model;
+        updates.history = data.history;
         updates.paths = data.paths;
         self.msg.eventtype = "update";
         self.msg.body.time = time.currentTime();
@@ -451,5 +478,120 @@ function handler() {
             sum += data.links[path[i]][path[i + 1]][TOTALCOUNT];
         }
         return {weight: Math.round(sum / path.length), path: path.slice(0)};
+    }
+
+    // Snapshot history starts here
+    // Init Requests
+    stream.create().input(this.compid + "_shellinitrequests").topic().destinationName(this.shellstreamname).selector("initrequest = true")
+        .onInput(function (input) {
+            var out = stream.create().output(null).forAddress(input.current().replyTo());
+            sendShellInit(out, input.current().correlationId());
+            out.close();
+        });
+
+    // Command Requests
+    stream.create().input(this.compid + "_shellcommandrequests").topic().destinationName(this.shellstreamname).selector("commandrequest = true")
+        .onInput(function (input) {
+            stream.log().info("Received command: " + input.current().body());
+            var out = stream.create().output(null).forAddress(input.current().replyTo());
+            executeCommand(out, input.current());
+            out.close();
+        });
+
+
+    function sendShellInit(output, id) {
+        var msg = {
+            msgtype: "servicereply",
+            streamname: self.shellstreamname,
+            eventtype: "init",
+            body: {
+                time: time.currentTime(),
+                message: ["Welcome to " + self.props["processname"] + " shell!",
+                    "Enter shell command or type 'help' to get a list of available commands."]
+            }
+        };
+        output.send(
+            stream.create().message()
+                .textMessage()
+                .correlationId(id)
+                .property("streamdata").set(true)
+                .property("streamname").set(self.shellstreamname)
+                .body(JSON.stringify(msg))
+        );
+    }
+
+    function executeCommand(output, cmdMsg) {
+        var msg = {
+            msgtype: "servicereply",
+            streamname: self.shellstreamname,
+            eventtype: "commandresult",
+            body: {
+                time: time.currentTime(),
+                message: null
+            }
+        };
+        var id = cmdMsg.correlationId();
+        var request = JSON.parse(cmdMsg.body());
+        var result;
+        try {
+            var cmd = Util.parseCLICommand(request.command);
+            switch (cmd[0]) {
+                case "help":
+                    result = shellCommands;
+                    break;
+                default:
+                    result = ["Error:", "Invalid command: "+cmd[0]];
+                    break;
+            }
+        } catch (e) {
+            result = ["Error:", e];
+        }
+        msg.body.message = result;
+        output.send(
+            stream.create().message()
+                .textMessage()
+                .correlationId(id)
+                .property("streamdata").set(true)
+                .property("streamname").set(self.shellstreamname)
+                .body(JSON.stringify(msg))
+        );
+    }
+
+    function field(s, length, c) {
+        var res = s;
+        for (var i = s.length; i < length; i++)
+            res += c;
+        return res;
+    }
+
+    if (this.props["historydays"] > 0) {
+
+        // History memory
+        stream.create().memory(HISTORYMEM)
+            .sharedQueue(SHAREDQUEUE)
+            .limit()
+            .time()
+            .sliding()
+            .days(this.props["historydays"])
+            .onRetire(function(retired){
+               if (stream.memory(HISTORYMEM).size() > 0)
+                   data.history.end = stream.memory(HISTORYMEM).last().property(SNAPSHOTTIMEPROP).value().toLong();
+               else
+                   data.history.end = 0;
+            });
+
+        // Snapshot timer
+        stream.create().timer(this.compid + "_historysnapshot").interval().minutes(15).onTimer(function(timer){
+            var snapshotTime = time.currentTime();
+             stream.memory(HISTORYMEM).add(
+                 stream.create().message().textMessage()
+                     .property(SNAPSHOTTIMEPROP).set(snapshotTime)
+                     .body(JSON.stringify(data))
+             ).checkLimit();
+            data.history.end = snapshotTime;
+            if (data.history.start === 0)
+                data.history.start = data.history.end;
+            stream.log().info("Snapshot, history size="+stream.memory(HISTORYMEM).size());
+        });
     }
 }

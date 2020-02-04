@@ -101,6 +101,16 @@
       "mandatory": false
     },
     {
+      "name": "historydays",
+      "label": "Keep Model History for Days",
+      "description": "Saves a process model history for the number of days in 15 minute snapshots. 0 means no history.",
+      "type": "integer",
+      "min": 0,
+      "max": 10,
+      "default": 5,
+      "mandatory": true
+    },
+    {
       "name": "updateintervalsec",
       "label": "Update Interval Seconds",
       "description": "Interval in seconds in which the updates are sent to the dashboard component.",
