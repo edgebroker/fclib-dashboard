@@ -55,9 +55,9 @@ function handler() {
             end: 0
         },
         history: {
-            start: 0,
-            end: 0 ,
-            interval: 15
+            lastsnapshottime: 0,
+            numbersnapshots: 0,
+            snapshotinterval: 15
         },
         kpis: [],
         stages: {},
@@ -539,8 +539,11 @@ function handler() {
                 case "help":
                     result = shellCommands;
                     break;
+                case "getsnapshot":
+                    result = getSnapshot(cmd);
+                    break;
                 default:
-                    result = ["Error:", "Invalid command: "+cmd[0]];
+                    result = ["Error:", "Invalid command: " + cmd[0]];
                     break;
             }
         } catch (e) {
@@ -555,6 +558,17 @@ function handler() {
                 .property("streamname").set(self.shellstreamname)
                 .body(JSON.stringify(msg))
         );
+    }
+
+    function getSnapshot(cmd) {
+        if (cmd.length !== 2)
+            return ["Error:", "Invalid number of parameters for this command!"];
+        var timestamp = Number(cmd[1]);
+        // Need to extend the range of the select due to no precise timer
+        var result = stream.memory(HISTORYMEM).select(SNAPSHOTTIMEPROP + " between " + (timestamp - 5 * 60000) + " and " + (timestamp + 5 * 60000));
+        if (result.size() === 0)
+            return ["Error:", "No snapshot found for this timestamp!"];
+        return ["Result:", result.first().body()];
     }
 
     function field(s, length, c) {
@@ -573,25 +587,21 @@ function handler() {
             .time()
             .sliding()
             .days(this.props["historydays"])
-            .onRetire(function(retired){
-               if (stream.memory(HISTORYMEM).size() > 0)
-                   data.history.end = stream.memory(HISTORYMEM).last().property(SNAPSHOTTIMEPROP).value().toLong();
-               else
-                   data.history.end = 0;
+            .onRetire(function (retired) {
+                data.history.numbersnapshots = stream.memory(HISTORYMEM).size();
             });
 
         // Snapshot timer
-        stream.create().timer(this.compid + "_historysnapshot").interval().minutes(15).onTimer(function(timer){
+        stream.create().timer(this.compid + "_historysnapshot").interval().minutes(15).onTimer(function (timer) {
             var snapshotTime = time.currentTime();
-             stream.memory(HISTORYMEM).add(
-                 stream.create().message().textMessage()
-                     .property(SNAPSHOTTIMEPROP).set(snapshotTime)
-                     .body(JSON.stringify(data))
-             ).checkLimit();
-            data.history.end = snapshotTime;
-            if (data.history.start === 0)
-                data.history.start = data.history.end;
-            stream.log().info("Snapshot, history size="+stream.memory(HISTORYMEM).size());
+            stream.memory(HISTORYMEM).add(
+                stream.create().message().textMessage()
+                    .property(SNAPSHOTTIMEPROP).set(snapshotTime)
+                    .body(JSON.stringify(data))
+            ).checkLimit();
+            data.history.lastsnapshottime = snapshotTime;
+            data.history.numbersnapshots = stream.memory(HISTORYMEM).size();
+            stream.log().info("Snapshot, history size=" + stream.memory(HISTORYMEM).size());
         });
     }
 }
