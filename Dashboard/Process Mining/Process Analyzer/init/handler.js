@@ -22,7 +22,9 @@ function handler() {
         field("", WIDTH_L + WIDTH_R + 2, '-'),
         field("help", WIDTH_L, ' ') + "| " + field("Show available commands", WIDTH_R, ' '),
         field("getsnapshot", WIDTH_L, ' ') + "| " + field("Returns a snapshot", WIDTH_R, ' '),
-        field("  <time>", WIDTH_L, ' ') + "| " + field("  Time", WIDTH_R, ' ')
+        field("  <time>", WIDTH_L, ' ') + "| " + field("  Time", WIDTH_R, ' '),
+        field("getsnapshotbyindex", WIDTH_L, ' ') + "| " + field("Returns a snapshot by index", WIDTH_R, ' '),
+        field("  <index>", WIDTH_L, ' ') + "| " + field("  Index", WIDTH_R, ' ')
     ];
 
     this.updateIntervalSec = this.props["updateintervalsec"];
@@ -542,6 +544,9 @@ function handler() {
                 case "getsnapshot":
                     result = getSnapshot(cmd);
                     break;
+                case "getsnapshotbyindex":
+                    result = getSnapshotByIndex(cmd);
+                    break;
                 default:
                     result = ["Error:", "Invalid command: " + cmd[0]];
                     break;
@@ -571,6 +576,15 @@ function handler() {
         return ["Result:", result.first().body()];
     }
 
+    function getSnapshotByIndex(cmd) {
+        if (cmd.length !== 2)
+            return ["Error:", "Invalid number of parameters for this command!"];
+        var index = Number(cmd[1]);
+        if (index < 0 || index > stream.memory(HISTORYMEM).size()-1)
+            return ["Error:", "Index out of range!"];
+        return ["Result:", stream.memory(HISTORYMEM).at(index).body()];
+    }
+
     function field(s, length, c) {
         var res = s;
         for (var i = s.length; i < length; i++)
@@ -578,30 +592,36 @@ function handler() {
         return res;
     }
 
-    if (this.props["historydays"] > 0) {
-
-        // History memory
-        stream.create().memory(HISTORYMEM)
-            .sharedQueue(SHAREDQUEUE)
-            .limit()
-            .time()
-            .sliding()
-            .days(this.props["historydays"])
-            .onRetire(function (retired) {
-                data.history.numbersnapshots = stream.memory(HISTORYMEM).size();
-            });
-
-        // Snapshot timer
-        stream.create().timer(this.compid + "_historysnapshot").interval().minutes(15).onTimer(function (timer) {
-            var snapshotTime = time.currentTime();
-            stream.memory(HISTORYMEM).add(
-                stream.create().message().textMessage()
-                    .property(SNAPSHOTTIMEPROP).set(snapshotTime)
-                    .body(JSON.stringify(data))
-            ).checkLimit();
-            data.history.lastsnapshottime = snapshotTime;
+    // History memory
+    stream.create().memory(HISTORYMEM)
+        .sharedQueue(SHAREDQUEUE)
+        .limit()
+        .time()
+        .sliding()
+        .days(this.props["historydays"])
+        .onRetire(function (retired) {
             data.history.numbersnapshots = stream.memory(HISTORYMEM).size();
-            stream.log().info("Snapshot, history size=" + stream.memory(HISTORYMEM).size());
         });
+
+    // Snapshot timer
+    stream.create().timer(this.compid + "_historysnapshot").interval().minutes(15).onTimer(function (timer) {
+        var snapshotTime = time.currentTime();
+        stream.memory(HISTORYMEM).add(
+            stream.create().message().textMessage()
+                .property(SNAPSHOTTIMEPROP).set(snapshotTime)
+                .body(JSON.stringify(data))
+        ).checkLimit();
+        data.history.lastsnapshottime = snapshotTime;
+        data.history.numbersnapshots = stream.memory(HISTORYMEM).size();
+        stream.log().info("Snapshot, history size=" + stream.memory(HISTORYMEM).size());
+    });
+
+    this.initSnapshots = function(){
+        stream.executeCallback(function(context){
+            if (stream.memory(HISTORYMEM).size() > 0) {
+                 data.history.lastsnapshottime = stream.memory(HISTORYMEM).last().property(SNAPSHOTTIMEPROP).value().toLong();
+                 data.history.numbersnapshots = stream.memory(HISTORYMEM).size();
+             }
+        }, null);
     }
 }

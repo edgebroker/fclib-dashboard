@@ -35,4 +35,5 @@ function handler() {
             .property("streamtype").set("service")
             .property("available").set(true)
     );
+    this.initSnapshots();
 }
