@@ -24,7 +24,9 @@ function handler() {
         field("getsnapshot", WIDTH_L, ' ') + "| " + field("Returns a snapshot", WIDTH_R, ' '),
         field("  <time>", WIDTH_L, ' ') + "| " + field("  Time", WIDTH_R, ' '),
         field("getsnapshotbyindex", WIDTH_L, ' ') + "| " + field("Returns a snapshot by index", WIDTH_R, ' '),
-        field("  <index>", WIDTH_L, ' ') + "| " + field("  Index", WIDTH_R, ' ')
+        field("  <index>", WIDTH_L, ' ') + "| " + field("  Index", WIDTH_R, ' '),
+        field("getitems", WIDTH_L, ' ') + "| " + field("Returns items from a stage.", WIDTH_R, ' '),
+        field("  <stage>", WIDTH_L, ' ') + "| " + field("  Stage name", WIDTH_R, ' ')
     ];
 
     this.updateIntervalSec = this.props["updateintervalsec"];
@@ -547,6 +549,9 @@ function handler() {
                 case "getsnapshotbyindex":
                     result = getSnapshotByIndex(cmd);
                     break;
+                case "getitems":
+                    result = getItems(cmd);
+                    break;
                 default:
                     result = ["Error:", "Invalid command: " + cmd[0]];
                     break;
@@ -580,9 +585,34 @@ function handler() {
         if (cmd.length !== 2)
             return ["Error:", "Invalid number of parameters for this command!"];
         var index = Number(cmd[1]);
-        if (index < 0 || index > stream.memory(HISTORYMEM).size()-1)
+        if (index < 0 || index > stream.memory(HISTORYMEM).size() - 1)
             return ["Error:", "Index out of range!"];
         return ["Result:", stream.memory(HISTORYMEM).at(index).body()];
+    }
+
+    function getItems(cmd) {
+        if (cmd.length > 2)
+            return ["Error:", "Invalid number of parameters for this command!"];
+        var stage = cmd[1];
+        var mem = stream.memory(MEMPREFIX + stage);
+        if (mem === null)
+            return ["Error:", "Stage not found: " + stage];
+        var result = [];
+        var max = Math.min(mem.size(), 100);
+        for (var i = 0; i < max; i++) {
+            result.push(messageToItemJson(mem.at(i)));
+        }
+        return ["Result:", JSON.stringify(result)];
+    }
+
+    function messageToItemJson(message) {
+        var json = {};
+        json[self.props["processproperty"]] = message.property(self.props["processproperty"]).value().toObject();
+        json[CHECKINTIME] = message.property(CHECKINTIME).value().toObject();
+        for (var i = 0; i < self.props["kpis"].length; i++) {
+            json[self.props["kpis"][i].label] = message.property(self.props["kpis"][i].propertyname).value().toObject();
+        }
+        return json;
     }
 
     function field(s, length, c) {
@@ -616,12 +646,12 @@ function handler() {
         stream.log().info("Snapshot, history size=" + stream.memory(HISTORYMEM).size());
     });
 
-    this.initSnapshots = function(){
-        stream.executeCallback(function(context){
+    this.initSnapshots = function () {
+        stream.executeCallback(function (context) {
             if (stream.memory(HISTORYMEM).size() > 0) {
-                 data.history.lastsnapshottime = stream.memory(HISTORYMEM).last().property(SNAPSHOTTIMEPROP).value().toLong();
-                 data.history.numbersnapshots = stream.memory(HISTORYMEM).size();
-             }
+                data.history.lastsnapshottime = stream.memory(HISTORYMEM).last().property(SNAPSHOTTIMEPROP).value().toLong();
+                data.history.numbersnapshots = stream.memory(HISTORYMEM).size();
+            }
         }, null);
     }
 }
