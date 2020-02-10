@@ -77,6 +77,44 @@
       ]
     },
     {
+      "name": "alerts",
+      "label": "Alerting",
+      "description": "Provide the maximum time for a process to stay at a specific stage. An alert is fired when this time is exceeded.",
+      "mandatory": false,
+      "type": "table",
+      "tablefields": [
+        {
+          "name": "stage",
+          "label": "Stage Name",
+          "description": "Provide the stage name.",
+          "mandatory": true,
+          "type": "string"
+        },
+        {
+          "name": "thresholdvalue",
+          "label": "Threshold Value",
+          "description": "Provide the value of the time threshold for this stage.",
+          "mandatory": true,
+          "type": "integer"
+        },
+        {
+          "name": "thresholdunit",
+          "label": "Threshold Unit",
+          "description": "Provide the unit of the time threshold for this stage.",
+          "mandatory": true,
+          "type": "choice",
+          "choice": [
+            "Seconds",
+            "Minutes",
+            "Hours",
+            "Days",
+            "Months"
+          ],
+          "default": "Minutes"
+        }
+      ]
+    },
+    {
       "name": "stageexpirationvalue",
       "label": "Stage Expiration Value",
       "description": "A process will expire after this time at a stage and is being moved to Process End. 0 means no expiration",

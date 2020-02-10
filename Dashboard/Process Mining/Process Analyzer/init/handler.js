@@ -72,6 +72,7 @@ function handler() {
     };
 
     var updates;
+    var lateThresholds = {};
     var uniquePaths = [];
     var dirty = false;
     var expirationMS;
@@ -79,6 +80,9 @@ function handler() {
     data.key = this.props["processproperty"];
     for (var i = 0; i < self.props["kpis"].length; i++) {
         data.kpis.push(self.props["kpis"][i].label);
+    }
+    for (i = 0; i < self.props["alerts"].length; i++) {
+        lateThresholds[self.props["alerts"][i].stage] = timeUnitToMillis(self.props["alerts"][i].thresholdvalue, self.props["alerts"][i].thresholdunit);
     }
 
     newUpdateSet();
@@ -91,6 +95,7 @@ function handler() {
     stream.create().input(this.streamname).topic().selector("initrequest = true")
         .onInput(function (input) {
             generateAllPaths();
+            checkLates();
             var out = stream.create().output(null).forAddress(input.current().replyTo());
             self.msg.eventtype = "init";
             self.msg.body.time = time.currentTime();
@@ -108,6 +113,7 @@ function handler() {
 
     stream.create().timer(this.compid + "_at_the_minute_starter").next().beginOfMinute().onTimer(function (t) {
         stream.create().timer(self.compid + "_update").interval().seconds(self.updateIntervalSec).onTimer(function (timer) {
+            checkLates();
             if (dirty) {
                 generateAllPaths();
                 sendUpdate();
@@ -157,25 +163,21 @@ function handler() {
         switch (this.props["stageexpirationunit"]) {
             case "Seconds":
                 stream.create().timer(this.compid + "_expiration").interval().seconds(1).onTimer(checkExpiredStages);
-                expirationMS = expirationValue * 1000;
                 break;
             case "Minutes":
                 stream.create().timer(this.compid + "_expiration").interval().seconds(30).onTimer(checkExpiredStages);
-                expirationMS = expirationValue * 60 * 1000;
                 break;
             case "Hours":
                 stream.create().timer(this.compid + "_expiration").interval().minutes(10).onTimer(checkExpiredStages);
-                expirationMS = expirationValue * 60 * 60 * 1000;
                 break;
             case "Days":
                 stream.create().timer(this.compid + "_expiration").interval().hours(1).onTimer(checkExpiredStages);
-                expirationMS = expirationValue * 60 * 60 * 24 * 1000;
                 break;
             case "Months":
                 stream.create().timer(this.compid + "_expiration").interval().days(1).onTimer(checkExpiredStages);
-                expirationMS = expirationValue * 60 * 60 * 24 * 30 * 1000;
                 break;
         }
+        expirationMS = timeUnitToMillis(expirationMS, this.props["stageexpirationunit"]);
     }
 
     function checkExpiredStages(timer) {
@@ -200,6 +202,51 @@ function handler() {
         processMessage(message);
         message.property(self.props["stageproperty"]).set(PROCESSEND);
         processMessage(message);
+    }
+
+    function timeUnitToMillis(value, unit) {
+        switch (unit) {
+            case "Seconds":
+                value = value * 1000;
+                break;
+            case "Minutes":
+                value = value * 60 * 1000;
+                break;
+            case "Hours":
+                value = value * 60 * 60 * 1000;
+                break;
+            case "Days":
+                value = value * 60 * 60 * 24 * 1000;
+                break;
+            case "Months":
+                value = value * 60 * 60 * 24 * 30 * 1000;
+                break;
+        }
+        return value;
+    }
+
+    function checkLates() {
+        for (var stage in data.stages) {
+            if (!(stage === PROCESSSTART || stage === PROCESSEND || stage === PROCESSEXPIRED))
+                checkLate(stage);
+        }
+    }
+
+    function checkLate(stage) {
+        var cnt = 0;
+        if (lateThresholds[stage]) {
+            var current = time.currentTime();
+            stream.memory(MEMPREFIX + stage).forEach(function (msg){
+                if (current-msg.property(CHECKINTIME).value().toLong() > lateThresholds[stage]) {
+                    cnt++;
+                }
+            });
+        }
+        if (data.stages[stage].late !== cnt) {
+            data.stages[stage].late = cnt;
+            updates.stages.update[stage] = JSON.parse(JSON.stringify(data.stages[stage]));
+            dirty = true;
+        }
     }
 
     // Removes all data from the model
@@ -411,7 +458,8 @@ function handler() {
         var stage = data.stages[name];
         if (!stage) {
             stage = {
-                kpis: {}
+                kpis: {},
+                late: 0
             };
             stage[TOTALCOUNT] = 0;
             stage[CURRENTCOUNT] = 0;
