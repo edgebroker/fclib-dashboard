@@ -64,6 +64,7 @@ function handler() {
             numbersnapshots: 0,
             snapshotinterval: 15
         },
+        key: null,
         kpis: [],
         stages: {},
         links: {},
@@ -75,6 +76,7 @@ function handler() {
     var dirty = false;
     var expirationMS;
 
+    data.key = this.props["processproperty"];
     for (var i = 0; i < self.props["kpis"].length; i++) {
         data.kpis.push(self.props["kpis"][i].label);
     }
