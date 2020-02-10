@@ -46,6 +46,7 @@ function handler() {
     var PROCESSEXPIRED = "Process Expired";
     var PROCESSEND = "Process End";
     var CHECKINTIME = "_checkintime";
+    var PATH = "_path";
     var TOTALCOUNT = "_totalcount";
     var CURRENTCOUNT = "_currentcount";
     var DELAY = "_delaysum";
@@ -241,13 +242,11 @@ function handler() {
         data.model.end = time.currentTime();
 
         msg.property(CHECKINTIME).set(time.currentTime());
-        msg.property(self.props["processproperty"]).set(key);
-        msg.property(self.props["stageproperty"]).set(stageName);
         for (var i = 0; i < self.props["kpis"].length; i++) {
             if (!self.assertProperty(message, self.props["kpis"][i]["propertyname"]))
                 return;
-            msg.property(self.props["kpis"][i]["propertyname"]).set(message.property(self.props["kpis"][i]["propertyname"]).value().toObject());
         }
+        msg.copyProperties(message);
         processMessage(msg);
         if (isProcessEnd(stageName)) {
             msg.property(self.props["stageproperty"]).set(PROCESSEND);
@@ -349,8 +348,8 @@ function handler() {
             rc = checkoutStage(message);
         } else {
             var path = [];
-            if (prevMessage.property("path").exists())
-                path = JSON.parse(prevMessage.property("path").value().toString());
+            if (prevMessage.property(PATH).exists())
+                path = JSON.parse(prevMessage.property(PATH).value().toString());
             rc = {stage: prevStage, time: checkinTime, path: path};
         }
         return rc;
@@ -362,7 +361,7 @@ function handler() {
         var isUpdate = !ensureStage(name, processprop);
 
         path.push(name);
-        message.property("path").set(JSON.stringify(path));
+        message.property(PATH).set(JSON.stringify(path));
         maintainUniquePaths(path);
 
         var stage = data.stages[name];
@@ -612,7 +611,19 @@ function handler() {
         for (var i = 0; i < self.props["kpis"].length; i++) {
             json[self.props["kpis"][i].label] = message.property(self.props["kpis"][i].propertyname).value().toObject();
         }
+        message.properties().forEach(function(p){
+           if (!(json[p.name()] || isKpi(p.name()) || p.name() === PATH))
+               json[p.name()] = p.value().toObject();
+        });
         return json;
+    }
+
+    function isKpi(name) {
+        for (var i = 0; i < self.props["kpis"].length; i++) {
+            if (name === self.props["kpis"][i].propertyname)
+                return true;
+        }
+        return false;
     }
 
     function field(s, length, c) {
