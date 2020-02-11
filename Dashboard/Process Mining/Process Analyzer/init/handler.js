@@ -417,8 +417,10 @@ function handler() {
         stage[TOTALCOUNT]++;
         stage[CURRENTCOUNT]++;
         for (var i = 0; i < self.props["kpis"].length; i++) {
-            stage.kpis[self.props["kpis"][i]["label"]].raw.current += message.property(self.props["kpis"][i]["propertyname"]).value().toObject();
-            stage.kpis[self.props["kpis"][i]["label"]].raw.total += message.property(self.props["kpis"][i]["propertyname"]).value().toObject();
+            var value = message.property(self.props["kpis"][i]["propertyname"]).value().toObject();
+            stage.kpis[self.props["kpis"][i]["label"]].raw.current += value;
+            stage.kpis[self.props["kpis"][i]["label"]].raw.total += value;
+            stage.kpis[self.props["kpis"][i]["label"]].average = stage.kpis[self.props["kpis"][i]["label"]].raw.total / stage[TOTALCOUNT];
         }
         if (name !== PROCESSEND)
             stream.memory(MEMPREFIX + name).add(message);
@@ -468,7 +470,8 @@ function handler() {
                     raw: {
                         current: 0,
                         total: 0
-                    }
+                    },
+                    average: 0
                 };
             }
             data.stages[name] = stage;
