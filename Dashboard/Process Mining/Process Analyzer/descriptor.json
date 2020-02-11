@@ -11,6 +11,16 @@
         "name": "Reset",
         "type": "timer"
       }
+    ],
+    "output": [
+      {
+        "name": "Totals",
+        "type": "message"
+      },
+      {
+        "name": "Stage Utilization",
+        "type": "message"
+      }
     ]
   },
   "properties": [
