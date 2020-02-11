@@ -46,6 +46,7 @@ function handler() {
     var PROCESSEXPIRED = "Process Expired";
     var PROCESSEND = "Process End";
     var CHECKINTIME = "_checkintime";
+    var LATEAFTER = "_lateafter";
     var PATH = "_path";
     var TOTALCOUNT = "_totalcount";
     var CURRENTCOUNT = "_currentcount";
@@ -652,15 +653,17 @@ function handler() {
         var result = [];
         var max = Math.min(mem.size(), 100);
         for (var i = 0; i < max; i++) {
-            result.push(messageToItemJson(mem.at(i)));
+            result.push(messageToItemJson(stage, mem.at(i)));
         }
         return ["Result:", JSON.stringify(result)];
     }
 
-    function messageToItemJson(message) {
+    function messageToItemJson(stage, message) {
         var json = {};
         json[self.props["processproperty"]] = message.property(self.props["processproperty"]).value().toObject();
         json[CHECKINTIME] = message.property(CHECKINTIME).value().toObject();
+        if (lateThresholds[stage])
+            json[LATEAFTER] = json[CHECKINTIME]+lateThresholds[stage];
         for (var i = 0; i < self.props["kpis"].length; i++) {
             json[self.props["kpis"][i].label] = message.property(self.props["kpis"][i].propertyname).value().toObject();
         }
