@@ -18,7 +18,7 @@
         "type": "message"
       },
       {
-        "name": "Stage Utilization",
+        "name": "StageUtilization",
         "type": "message"
       }
     ]

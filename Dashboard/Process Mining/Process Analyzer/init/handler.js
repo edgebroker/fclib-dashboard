@@ -473,6 +473,12 @@ function handler() {
             totals.intransit--;
         if (isUpdate)
             updates.stages.update[name] = JSON.parse(JSON.stringify(stage));
+        if (name !== PROCESSSTART && name !== PROCESSEND) {
+            var utilization = stream.create().message().message();
+            utilization.property("stage").set(name);
+            utilization.property("current").set(1);
+            self.executeOutputLink("StageUtilization", utilization);
+        }
         return {stage: name, time: message.property(CHECKINTIME).value().toLong()};
     }
 
