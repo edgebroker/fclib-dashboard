@@ -171,7 +171,6 @@ function handler() {
 
     // Expiration Timer
     if (this.props["stageexpirationvalue"] > 0) {
-        var expirationValue = this.props["stageexpirationvalue"];
         switch (this.props["stageexpirationunit"]) {
             case "Seconds":
                 stream.create().timer(this.compid + "_expiration").interval().seconds(1).onTimer(checkExpiredStages);
@@ -189,7 +188,7 @@ function handler() {
                 stream.create().timer(this.compid + "_expiration").interval().days(1).onTimer(checkExpiredStages);
                 break;
         }
-        expirationMS = timeUnitToMillis(expirationMS, this.props["stageexpirationunit"]);
+        expirationMS = timeUnitToMillis(this.props["stageexpirationvalue"], this.props["stageexpirationunit"]);
     }
 
     function checkExpiredStages(timer) {
