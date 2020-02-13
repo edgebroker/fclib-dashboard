@@ -48,7 +48,7 @@
     {
       "name": "processstartstages",
       "label": "Process Start Stages",
-      "description": "Specify the names of the stages that mark the start of the process. Only those processes are respected that start with one of these stages. Add these to ensure to have only complete processes in the model.",
+      "description": "Specify substrings of stage names that mark the start of a process. Only those processes are respected that start with a stage that contains one of these substrings. Add these to ensure to have only complete processes in the model.",
       "type": "array",
       "fieldtypes": [
         "string"
@@ -57,7 +57,7 @@
     {
       "name": "processendstages",
       "label": "Process End Stages",
-      "description": "Specify the names of the stages that mark the end of the process.",
+      "description": "Specify substrings of stage names that mark the end of the process. A process that contains one of these substrings in the stage name is automatically moved to Process End.",
       "type": "array",
       "fieldtypes": [
         "string"
@@ -66,7 +66,7 @@
     {
       "name": "kpis",
       "label": "Key Performance Indicators (KPI)",
-      "description": "Provide the KPI properties contained in the input messages.",
+      "description": "Provide the KPI properties contained in the input messages. These properties must have a numeric value.",
       "mandatory": false,
       "type": "table",
       "tablefields": [
@@ -127,7 +127,7 @@
     {
       "name": "stageexpirationvalue",
       "label": "Stage Expiration Value",
-      "description": "A process will expire after this time at a stage and is being moved to Process End. 0 means no expiration",
+      "description": "A process will expire after this time at a stage and is being moved via Process Expired to Process End. 0 means no expiration",
       "type": "integer",
       "min": 0,
       "default": 0,

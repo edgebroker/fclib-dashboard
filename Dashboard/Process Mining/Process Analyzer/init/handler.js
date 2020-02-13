@@ -354,7 +354,7 @@ function handler() {
 
         // Not started, accept start stages only
         for (var i = 0; i < self.props["processstartstages"].length; i++) {
-            if (stageName === self.props["processstartstages"][i])
+            if (stageName.indexOf(self.props["processstartstages"][i]) !== -1)
                 return true;
         }
 
@@ -538,7 +538,7 @@ function handler() {
     // Checks whether a stage is marked as Process End
     function isProcessEnd(stageName) {
         for (var i = 0; i < self.props["processendstages"].length; i++) {
-            if (stageName === self.props["processendstages"][i])
+            if (stageName.indexOf(self.props["processendstages"][i]) !== -1)
                 return true;
         }
         return false;
