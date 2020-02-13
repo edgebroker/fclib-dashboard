@@ -472,6 +472,8 @@ function handler() {
             totals.intransit--;
         if (isUpdate)
             updates.stages.update[name] = JSON.parse(JSON.stringify(stage));
+        else
+            updates.stages.add[name] = JSON.parse(JSON.stringify(stage));
         if (name !== PROCESSSTART && name !== PROCESSEND) {
             var utilization = stream.create().message().message();
             utilization.property("stage").set(name);
@@ -529,7 +531,6 @@ function handler() {
             data.stages[name] = stage;
             if (name !== PROCESSEND)
                 stream.create().memory(MEMPREFIX + name).heap().createIndex(processprop);
-            updates.stages.add[name] = JSON.parse(JSON.stringify(stage));
             return true;
         }
         return false;
