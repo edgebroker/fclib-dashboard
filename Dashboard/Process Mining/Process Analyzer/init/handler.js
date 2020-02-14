@@ -120,7 +120,6 @@ function handler() {
                     .body(JSON.stringify(self.msg))
             );
             out.close();
-            stream.log().info(JSON.stringify(data, null, 2));
         });
 
     stream.create().timer(this.compid + "_at_the_minute_starter").next().beginOfMinute().onTimer(function (t) {
@@ -165,7 +164,6 @@ function handler() {
                 .property("streamname").set(self.streamname)
                 .body(JSON.stringify(self.msg))
         );
-        stream.log().info(JSON.stringify(updates, null, 2));
         newUpdateSet();
     }
 
@@ -568,8 +566,7 @@ function handler() {
         data.paths[TOTALCOUNT] = intermediateTotal.sort(function (a, b) {
             return b.weight - a.weight;
         });
-        stream.log().info("unique paths=" + uniquePaths.length + ", time=" + (time.currentTime() - start));
-    }
+     }
 
     // Weight the KPI paths
     function weightKpiPath(kpi, path) {
@@ -601,7 +598,6 @@ function handler() {
     // Command Requests
     stream.create().input(this.compid + "_shellcommandrequests").topic().destinationName(this.shellstreamname).selector("commandrequest = true")
         .onInput(function (input) {
-            stream.log().info("Received command: " + input.current().body());
             var out = stream.create().output(null).forAddress(input.current().replyTo());
             executeCommand(out, input.current());
             out.close();
