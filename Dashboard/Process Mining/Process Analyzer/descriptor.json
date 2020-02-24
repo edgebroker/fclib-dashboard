@@ -1,0 +1,171 @@
+{
+  "description": "Analyzes a process by tracking a process property (i.e. an orderid) over multiple process stages. It automatically creates a process model and serves as input component for the Process Visualizer dashboard component.",
+  "labelproperty": "processname",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "message"
+      },
+      {
+        "name": "Reset",
+        "type": "timer"
+      }
+    ],
+    "output": [
+      {
+        "name": "Totals",
+        "type": "message"
+      },
+      {
+        "name": "StageUtilization",
+        "type": "message"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "processname",
+      "label": "Process Name",
+      "description": "Specify the name of the process.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "processproperty",
+      "label": "Process Property",
+      "description": "Specify the name of the property that identifies the business object, i.e. orderid.",
+      "type": "identifier",
+      "mandatory": true
+    },
+    {
+      "name": "stageproperty",
+      "label": "Stage Property",
+      "description": "Specify the name of the property which contains the name of the stage to which an input message will be assigned.",
+      "type": "identifier",
+      "default": "stage"
+    },
+    {
+      "name": "processstartstages",
+      "label": "Process Start Stages",
+      "description": "Specify substrings of stage names that mark the start of a process. Only those processes are respected that start with a stage that contains one of these substrings. Add these to ensure to have only complete processes in the model.",
+      "type": "array",
+      "fieldtypes": [
+        "string"
+      ]
+    },
+    {
+      "name": "processendstages",
+      "label": "Process End Stages",
+      "description": "Specify substrings of stage names that mark the end of the process. A process that contains one of these substrings in the stage name is automatically moved to Process End.",
+      "type": "array",
+      "fieldtypes": [
+        "string"
+      ]
+    },
+    {
+      "name": "kpis",
+      "label": "Key Performance Indicators (KPI)",
+      "description": "Provide the KPI properties contained in the input messages. These properties must have a numeric value.",
+      "mandatory": false,
+      "type": "table",
+      "tablefields": [
+        {
+          "name": "propertyname",
+          "label": "Property Name",
+          "description": "Provide the property name.",
+          "mandatory": true,
+          "type": "identifier"
+        },
+        {
+          "name": "label",
+          "label": "Label",
+          "description": "Provide the label for this KPI.",
+          "mandatory": true,
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "alerts",
+      "label": "Alerting",
+      "description": "Provide the maximum time for a process to stay at a specific stage. An alert is fired when this time is exceeded.",
+      "mandatory": false,
+      "type": "table",
+      "tablefields": [
+        {
+          "name": "stage",
+          "label": "Stage Name",
+          "description": "Provide the stage name.",
+          "mandatory": true,
+          "type": "string"
+        },
+        {
+          "name": "thresholdvalue",
+          "label": "Threshold Value",
+          "description": "Provide the value of the time threshold for this stage.",
+          "mandatory": true,
+          "type": "integer"
+        },
+        {
+          "name": "thresholdunit",
+          "label": "Threshold Unit",
+          "description": "Provide the unit of the time threshold for this stage.",
+          "mandatory": true,
+          "type": "choice",
+          "choice": [
+            "Seconds",
+            "Minutes",
+            "Hours",
+            "Days",
+            "Months"
+          ],
+          "default": "Minutes"
+        }
+      ]
+    },
+    {
+      "name": "stageexpirationvalue",
+      "label": "Stage Expiration Value",
+      "description": "A process will expire after this time at a stage and is being moved via Process Expired to Process End. 0 means no expiration",
+      "type": "integer",
+      "min": 0,
+      "default": 0,
+      "mandatory": false
+    },
+    {
+      "name": "stageexpirationunit",
+      "label": "Stage Expiration Unit",
+      "description": "Time unit for stage expiration.",
+      "type": "choice",
+      "choice": [
+        "Seconds",
+        "Minutes",
+        "Hours",
+        "Days",
+        "Months"
+      ],
+      "default": "Minutes",
+      "mandatory": false
+    },
+    {
+      "name": "historydays",
+      "label": "Keep Model History for Days",
+      "description": "Saves a process model history for the number of days in 15 minute snapshots.",
+      "type": "integer",
+      "min": 1,
+      "max": 10,
+      "default": 5,
+      "mandatory": true
+    },
+    {
+      "name": "updateintervalsec",
+      "label": "Update Interval Seconds",
+      "description": "Interval in seconds in which the updates are sent to the dashboard component.",
+      "type": "integer",
+      "min": 1,
+      "default": 10,
+      "mandatory": true
+    }
+  ]
+}
