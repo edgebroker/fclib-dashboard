@@ -168,6 +168,26 @@ function handler() {
         newUpdateSet();
     }
 
+    // Static happy path
+    if (this.props["happypath"]) {
+        ensureStage(PROCESSSTART, this.props["processproperty"]);
+        for (var i=0;i<this.props["happypath"].length; i++){
+            ensureStage(this.props["happypath"][i], this.props["processproperty"]);
+            if (i===0)
+                ensureLink(PROCESSSTART, this.props["happypath"][i]);
+            else
+                ensureLink(this.props["happypath"][i-1], this.props["happypath"][i]);
+        }
+        ensureStage(PROCESSEND, this.props["processproperty"]);
+        ensureLink(this.props["happypath"][this.props["happypath"].length-1], PROCESSEND);
+        var path = [];
+        path.push(PROCESSSTART);
+        path = path.concat(this.props["happypath"]);
+        path.push(PROCESSEND);
+        uniquePaths.push({path: path, statichappypath: true});
+        dirty = true;
+    }
+
     // Expiration Timer
     if (this.props["stageexpirationvalue"] > 0) {
         switch (this.props["stageexpirationunit"]) {
@@ -369,7 +389,7 @@ function handler() {
 
     // Creates or updates a link between stages
     function processLink(source, target, message) {
-        ensureLink(source, target);
+        ensureLink(source.stage, target.stage);
         data.links[source.stage][target.stage][TOTALCOUNT]++;
         data.links[source.stage][target.stage][DELAY] += target.time - source.time;
         for (var i = 0; i < self.props["kpis"].length; i++) {
@@ -385,23 +405,23 @@ function handler() {
 
     // Ensures that a link exists
     function ensureLink(source, target) {
-        if (!data.links[source.stage])
-            data.links[source.stage] = {};
-        if (!data.links[source.stage][target.stage]) {
-            data.links[source.stage][target.stage] = {
+        if (!data.links[source])
+            data.links[source] = {};
+        if (!data.links[source][target]) {
+            data.links[source][target] = {
                 kpis: {}
             };
-            data.links[source.stage][target.stage][TOTALCOUNT] = 0;
-            data.links[source.stage][target.stage][DELAY] = 0;
+            data.links[source][target][TOTALCOUNT] = 0;
+            data.links[source][target][DELAY] = 0;
             for (var i = 0; i < self.props["kpis"].length; i++) {
-                data.links[source.stage][target.stage].kpis[self.props["kpis"][i]["label"]] = {
+                data.links[source][target].kpis[self.props["kpis"][i]["label"]] = {
                     raw: {
                         total: 0
                     },
                     average: 0
                 };
             }
-            updates.links.add[source.stage] = JSON.parse(JSON.stringify(data.links[source.stage]));
+            updates.links.add[source] = JSON.parse(JSON.stringify(data.links[source]));
         }
     }
 
@@ -546,27 +566,44 @@ function handler() {
 
     // Generates all paths
     function generateAllPaths() {
-        var start = time.currentTime();
         var result = uniquePaths;
         data.paths = {};
         for (var i = 0; i < self.props["kpis"].length; i++) {
             var kpi = self.props["kpis"][i].label;
             var intermediate = [];
+            var happyKPI;
             result.forEach(function (p) {
-                intermediate.push(weightKpiPath(kpi, p.path));
+                if (p.statichappypath)
+                    happyKPI = p;
+                else
+                    intermediate.push(weightKpiPath(kpi, p.path));
             });
             data.paths[kpi] = intermediate.sort(function (a, b) {
                 return b.weight - a.weight;
             });
+            if (happyKPI) {
+              var p = weightKpiPath(kpi, happyKPI.path);
+              p["statichappypath"] = true;
+              data.paths[kpi].splice(0,0,p);
+            }
         }
         var intermediateTotal = [];
+        var happyTotal;
         result.forEach(function (p) {
-            intermediateTotal.push(weightTotalPath(p.path));
+            if (p.statichappypath)
+                happyTotal = p;
+            else
+                intermediateTotal.push(weightTotalPath(p.path));
         });
 
         data.paths[TOTALCOUNT] = intermediateTotal.sort(function (a, b) {
             return b.weight - a.weight;
         });
+        if (happyTotal) {
+          var pt = weightTotalPath(happyTotal.path);
+          pt["statichappypath"] = true;
+          data.paths[TOTALCOUNT].splice(0,0,pt);
+        }
      }
 
     // Weight the KPI paths
