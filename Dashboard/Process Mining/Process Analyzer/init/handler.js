@@ -56,6 +56,11 @@ function handler() {
     var SHAREDQUEUE = this.flowcontext.getFlowQueue();
 
     var data = {
+        totals: {
+                totalprocessed: 0,
+                intransit: 0,
+                kpis: {}
+            },
         model: {
             start: 0,
             end: 0
@@ -72,12 +77,6 @@ function handler() {
         paths: {}
     };
 
-    var totals = {
-        totalprocessed: 0,
-        intransit: 0,
-        kpis: {}
-    };
-
     var alertcount = 0;
     var updates;
     var lateThresholds = {};
@@ -88,7 +87,7 @@ function handler() {
     data.key = this.props["processproperty"];
     for (var i = 0; i < self.props["kpis"].length; i++) {
         data.kpis.push(self.props["kpis"][i].label);
-        totals.kpis[self.props["kpis"][i].propertyname] = {
+        data.totals.kpis[self.props["kpis"][i].propertyname] = {
             totalprocessed: 0,
             intransit: 0
         }
@@ -135,6 +134,7 @@ function handler() {
 
     function newUpdateSet() {
         updates = {
+            totals: {},
             stages: {
                 add: {},
                 remove: [],
@@ -151,6 +151,7 @@ function handler() {
     }
 
     function sendUpdate() {
+        updates.totals = data.totals;
         updates.model = data.model;
         updates.history = data.history;
         updates.paths = data.paths;
@@ -275,11 +276,11 @@ function handler() {
         data.stages = {};
         data.links = {};
         data.paths = {};
-        totals.totalprocessed = 0;
-        totals.intransit = 0;
-        for (var kpi in totals.kpis) {
-            totals.kpis[kpi].totalprocessed = 0;
-            totals.kpis[kpi].intransit = 0;
+        data.totals.totalprocessed = 0;
+        data.totals.intransit = 0;
+        for (var kpi in data.totals.kpis) {
+            data.totals.kpis[kpi].totalprocessed = 0;
+            data.totals.kpis[kpi].intransit = 0;
         }
         uniquePaths = [];
         sendUpdate();
@@ -326,11 +327,11 @@ function handler() {
     function sendTotals(){
         var msg = stream.create().message().message();
         msg.property("alertcount").set(alertcount);
-        msg.property("totalprocessed").set(totals.totalprocessed);
-        msg.property("intransit").set(totals.intransit);
-        for (var kpi in totals.kpis) {
-            msg.property(kpi+"_totalprocessed").set(totals.kpis[kpi].totalprocessed);
-            msg.property(kpi+"_intransit").set(totals.kpis[kpi].intransit);
+        msg.property("totalprocessed").set(data.totals.totalprocessed);
+        msg.property("intransit").set(data.totals.intransit);
+        for (var kpi in data.totals.kpis) {
+            msg.property(kpi+"_totalprocessed").set(data.totals.kpis[kpi].totalprocessed);
+            msg.property(kpi+"_intransit").set(data.totals.kpis[kpi].intransit);
         }
         self.executeOutputLink("Totals", msg);
     }
@@ -456,18 +457,18 @@ function handler() {
             stage.kpis[self.props["kpis"][i]["label"]].raw.total += value;
             stage.kpis[self.props["kpis"][i]["label"]].average = stage.kpis[self.props["kpis"][i]["label"]].raw.total / stage[TOTALCOUNT];
             if (name === PROCESSSTART) {
-                totals.kpis[self.props["kpis"][i]["propertyname"]].totalprocessed += value;
-                totals.kpis[self.props["kpis"][i]["propertyname"]].intransit += value;
+                data.totals.kpis[self.props["kpis"][i]["propertyname"]].totalprocessed += value;
+                data.totals.kpis[self.props["kpis"][i]["propertyname"]].intransit += value;
             } else if (name === PROCESSEND)
-                totals.kpis[self.props["kpis"][i]["propertyname"]].intransit -= value;
+                data.totals.kpis[self.props["kpis"][i]["propertyname"]].intransit -= value;
         }
         if (name !== PROCESSEND)
             stream.memory(MEMPREFIX + name).add(message);
         if (name === PROCESSSTART) {
-            totals.totalprocessed++;
-            totals.intransit++;
+            data.totals.totalprocessed++;
+            data.totals.intransit++;
         } else if (name === PROCESSEND)
-            totals.intransit--;
+            data.totals.intransit--;
         if (isUpdate)
             updates.stages.update[name] = JSON.parse(JSON.stringify(stage));
         else

@@ -64,9 +64,18 @@
       ]
     },
     {
+      "name": "happypath",
+      "label": "Happy Path",
+      "description": "Specify all stage names that make up the happy path. This is the most optimal way of a process. This is optional. If not specified, the component computes it automatically by using 'sum total / number stages'.",
+      "type": "array",
+      "fieldtypes": [
+        "string"
+      ]
+    },
+    {
       "name": "kpis",
-      "label": "Key Performance Indicators (KPI)",
-      "description": "Provide the KPI properties contained in the input messages. These properties must have a numeric value.",
+      "label": "Key Performance Indicator Values (KPI Values)",
+      "description": "Provide the KPI value properties contained in the input messages. These properties must have a numeric value.",
       "mandatory": false,
       "type": "table",
       "tablefields": [
