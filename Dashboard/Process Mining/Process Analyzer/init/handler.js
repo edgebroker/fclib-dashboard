@@ -477,10 +477,10 @@ function handler() {
             stage.kpis[self.props["kpis"][i]["label"]].raw.total += value;
             stage.kpis[self.props["kpis"][i]["label"]].average = stage.kpis[self.props["kpis"][i]["label"]].raw.total / stage[TOTALCOUNT];
             if (name === PROCESSSTART) {
-                data.totals.kpis[self.props["kpis"][i]["propertyname"]].totalprocessed += value;
-                data.totals.kpis[self.props["kpis"][i]["propertyname"]].intransit += value;
+                data.totals.kpis[self.props["kpis"][i]["label"]].totalprocessed += value;
+                data.totals.kpis[self.props["kpis"][i]["label"]].intransit += value;
             } else if (name === PROCESSEND)
-                data.totals.kpis[self.props["kpis"][i]["propertyname"]].intransit -= value;
+                data.totals.kpis[self.props["kpis"][i]["label"]].intransit -= value;
         }
         if (name !== PROCESSEND)
             stream.memory(MEMPREFIX + name).add(message);
