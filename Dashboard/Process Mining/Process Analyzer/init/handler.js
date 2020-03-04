@@ -86,8 +86,8 @@ function handler() {
 
     data.key = this.props["processproperty"];
     for (var i = 0; i < self.props["kpis"].length; i++) {
-        data.kpis.push(self.props["kpis"][i].label);
-        data.totals.kpis[self.props["kpis"][i].label] = {
+        data.kpis.push({name: self.props["kpis"][i].propertyname, label: self.props["kpis"][i].label});
+        data.totals.kpis[self.props["kpis"][i].propertyname] = {
             totalprocessed: 0,
             intransit: 0
         }
@@ -394,8 +394,8 @@ function handler() {
         data.links[source.stage][target.stage][DELAY] += target.time - source.time;
         for (var i = 0; i < self.props["kpis"].length; i++) {
             var value = message.property(self.props["kpis"][i]["propertyname"]).value().toObject();
-            data.links[source.stage][target.stage].kpis[self.props["kpis"][i]["label"]].raw.total += value;
-            data.links[source.stage][target.stage].kpis[self.props["kpis"][i]["label"]].average += data.links[source.stage][target.stage].kpis[self.props["kpis"][i]["label"]].raw.total / data.links[source.stage][target.stage][TOTALCOUNT];
+            data.links[source.stage][target.stage].kpis[self.props["kpis"][i]["propertyname"]].raw.total += value;
+            data.links[source.stage][target.stage].kpis[self.props["kpis"][i]["propertyname"]].average += data.links[source.stage][target.stage].kpis[self.props["kpis"][i]["propertyname"]].raw.total / data.links[source.stage][target.stage][TOTALCOUNT];
         }
         var linkCopy = JSON.parse(JSON.stringify(data.links[source.stage][target.stage]));
         if (!updates.links.update[source.stage])
@@ -414,7 +414,7 @@ function handler() {
             data.links[source][target][TOTALCOUNT] = 0;
             data.links[source][target][DELAY] = 0;
             for (var i = 0; i < self.props["kpis"].length; i++) {
-                data.links[source][target].kpis[self.props["kpis"][i]["label"]] = {
+                data.links[source][target].kpis[self.props["kpis"][i]["propertyname"]] = {
                     raw: {
                         total: 0
                     },
@@ -440,7 +440,7 @@ function handler() {
                 checkinTime = prevMessage.property(CHECKINTIME).value().toLong();
                 stream.memory(MEMPREFIX + key).index(self.props["processproperty"]).remove(value);
                 for (var i = 0; i < self.props["kpis"].length; i++) {
-                    data.stages[prevStage].kpis[self.props["kpis"][i]["label"]].raw.current -= prevMessage.property(self.props["kpis"][i]["propertyname"]).value().toObject();
+                    data.stages[prevStage].kpis[self.props["kpis"][i]["propertyname"]].raw.current -= prevMessage.property(self.props["kpis"][i]["propertyname"]).value().toObject();
                 }
                 updates.stages.update[key] = JSON.parse(JSON.stringify(data.stages[key]));
                 break;
@@ -473,14 +473,14 @@ function handler() {
         stage[CURRENTCOUNT]++;
         for (var i = 0; i < self.props["kpis"].length; i++) {
             var value = message.property(self.props["kpis"][i]["propertyname"]).value().toObject();
-            stage.kpis[self.props["kpis"][i]["label"]].raw.current += value;
-            stage.kpis[self.props["kpis"][i]["label"]].raw.total += value;
-            stage.kpis[self.props["kpis"][i]["label"]].average = stage.kpis[self.props["kpis"][i]["label"]].raw.total / stage[TOTALCOUNT];
+            stage.kpis[self.props["kpis"][i]["propertyname"]].raw.current += value;
+            stage.kpis[self.props["kpis"][i]["propertyname"]].raw.total += value;
+            stage.kpis[self.props["kpis"][i]["propertyname"]].average = stage.kpis[self.props["kpis"][i]["propertyname"]].raw.total / stage[TOTALCOUNT];
             if (name === PROCESSSTART) {
-                data.totals.kpis[self.props["kpis"][i]["label"]].totalprocessed += value;
-                data.totals.kpis[self.props["kpis"][i]["label"]].intransit += value;
+                data.totals.kpis[self.props["kpis"][i]["propertyname"]].totalprocessed += value;
+                data.totals.kpis[self.props["kpis"][i]["propertyname"]].intransit += value;
             } else if (name === PROCESSEND)
-                data.totals.kpis[self.props["kpis"][i]["label"]].intransit -= value;
+                data.totals.kpis[self.props["kpis"][i]["propertyname"]].intransit -= value;
         }
         if (name !== PROCESSEND)
             stream.memory(MEMPREFIX + name).add(message);
@@ -539,7 +539,7 @@ function handler() {
             stage[TOTALCOUNT] = 0;
             stage[CURRENTCOUNT] = 0;
             for (var i = 0; i < self.props["kpis"].length; i++) {
-                stage.kpis[self.props["kpis"][i]["label"]] = {
+                stage.kpis[self.props["kpis"][i]["propertyname"]] = {
                     raw: {
                         current: 0,
                         total: 0
@@ -569,7 +569,7 @@ function handler() {
         var result = uniquePaths;
         data.paths = {};
         for (var i = 0; i < self.props["kpis"].length; i++) {
-            var kpi = self.props["kpis"][i].label;
+            var kpi = self.props["kpis"][i].propertyname;
             var intermediate = [];
             var happyKPI;
             result.forEach(function (p) {
@@ -751,7 +751,7 @@ function handler() {
         if (lateThresholds[stage])
             json[LATEAFTER] = json[CHECKINTIME]+lateThresholds[stage];
         for (var i = 0; i < self.props["kpis"].length; i++) {
-            json[self.props["kpis"][i].label] = message.property(self.props["kpis"][i].propertyname).value().toObject();
+            json[self.props["kpis"][i].propertyname] = message.property(self.props["kpis"][i].propertyname).value().toObject();
         }
         message.properties().forEach(function(p){
            if (!(json[p.name()] || isKpi(p.name()) || p.name() === PATH))
