@@ -119,7 +119,6 @@ function handler() {
                     .body(JSON.stringify(self.msg))
             );
             out.close();
-            stream.log().info("Init: "+JSON.stringify(data, null, 2));
         });
 
     stream.create().timer(this.compid + "_at_the_minute_starter").next().beginOfMinute().onTimer(function (t) {
