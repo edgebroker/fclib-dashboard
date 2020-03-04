@@ -87,7 +87,7 @@ function handler() {
     data.key = this.props["processproperty"];
     for (var i = 0; i < self.props["kpis"].length; i++) {
         data.kpis.push(self.props["kpis"][i].label);
-        data.totals.kpis[self.props["kpis"][i].propertyname] = {
+        data.totals.kpis[self.props["kpis"][i].label] = {
             totalprocessed: 0,
             intransit: 0
         }
@@ -119,6 +119,7 @@ function handler() {
                     .body(JSON.stringify(self.msg))
             );
             out.close();
+            stream.log().info("Init: "+JSON.stringify(data, null, 2));
         });
 
     stream.create().timer(this.compid + "_at_the_minute_starter").next().beginOfMinute().onTimer(function (t) {
