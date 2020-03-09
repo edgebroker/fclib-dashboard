@@ -1,0 +1,27 @@
+{
+  "description": "Returns a reference to the memory of a stage that contains all messages that are currently checked into that stage.",
+  "refs": {
+    "input": [
+      {
+        "name": "Process Model",
+        "type": "processmodel",
+        "mandatory": true
+      }
+    ],
+    "output": [
+      {
+        "name": "Stage Memory",
+        "type": "memory"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "stage",
+      "label": "Stage",
+      "description": "Specify the name of the stage.",
+      "type": "string",
+      "mandatory": true
+    }
+  ]
+}

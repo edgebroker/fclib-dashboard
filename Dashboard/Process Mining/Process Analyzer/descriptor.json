@@ -23,6 +23,14 @@
       }
     ]
   },
+  "refs": {
+    "output": [
+      {
+        "name": "Process Model",
+        "type": "processmodel"
+      }
+    ]
+  },
   "properties": [
     {
       "name": "processname",

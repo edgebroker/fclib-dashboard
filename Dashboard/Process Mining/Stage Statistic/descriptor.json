@@ -1,0 +1,27 @@
+{
+  "description": "Returns a reference to a message with the statistic of the named stage. The following properties are set: _totalcount, _currentcount, late. For each KPI value: <kpi-propertyname>_raw_total, <kpi-propertyname>_raw_current, <kpi-propertyname>_average.",
+  "refs": {
+    "input": [
+      {
+        "name": "Process Model",
+        "type": "processmodel",
+        "mandatory": true
+      }
+    ],
+    "output": [
+      {
+        "name": "Stage Memory",
+        "type": "memory"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "stage",
+      "label": "Stage",
+      "description": "Specify the name of the stage.",
+      "type": "string",
+      "mandatory": true
+    }
+  ]
+}

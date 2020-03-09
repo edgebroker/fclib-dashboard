@@ -1,0 +1,47 @@
+{
+  "description": "Checks the process model if the named link is defined and calls the appropriate output with the input message.",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "message",
+        "mandatory": true
+      }
+    ],
+    "output": [
+      {
+        "name": "Yes",
+        "type": "message"
+      },
+      {
+        "name": "No",
+        "type": "message"
+      }
+    ]
+  },
+  "refs": {
+    "input": [
+      {
+        "name": "Process Model",
+        "type": "processmodel",
+        "mandatory": true
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "sourcestage",
+      "label": "Source Stage",
+      "description": "Specify the name of the source stage of the link.",
+      "type": "string",
+      "mandatory": true
+    },
+    {
+      "name": "targetstage",
+      "label": "Target Stage",
+      "description": "Specify the name of the target stage of the link.",
+      "type": "string",
+      "mandatory": true
+    }
+  ]
+}

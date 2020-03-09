@@ -102,6 +102,84 @@ function handler() {
     stream.create().output(this.metaRegistryTopic).topic();
     stream.create().output(this.streamname).topic();
 
+    // Process Model access from other comps
+    this.setOutputReference("Process Model", execRef);
+
+    function execRef() {
+        return self;
+    }
+
+    this.getModelStats = function() {
+      return createTotals();
+    };
+
+    this.stageDefined = function(stage){
+        return data.stages[stage];
+    };
+
+    this.getStageStats = function(stage) {
+        if (data.stages[stage])
+            return createStageStats(data.stages[stage]);
+        return null;
+    };
+
+    this.getStageMem = function(stage) {
+        return stream.memory(MEMPREFIX + stage);
+    };
+
+    this.linkDefined = function(source, target){
+        return data.links[source] && data.links[source][target];
+    };
+
+    this.getLinkStats = function(source, target) {
+        if (data.links[source] && data.links[source][target])
+            return createLinkStats(data.links[source][target]);
+        return null;
+    };
+
+    this.getPathEstimate = function(source, target) {
+        if (data.links[source] && data.links[source][target])
+            return createLinkStats(data.links[source][target]);
+        return null;
+    };
+
+    function createTotals() {
+        var msg = stream.create().message().message();
+        msg.property("alertcount").set(alertcount);
+        msg.property("totalprocessed").set(data.totals.totalprocessed);
+        msg.property("intransit").set(data.totals.intransit);
+        for (var kpi in data.totals.kpis) {
+            msg.property(kpi + "_totalprocessed").set(data.totals.kpis[kpi].totalprocessed);
+            msg.property(kpi + "_intransit").set(data.totals.kpis[kpi].intransit);
+        }
+        return msg;
+    }
+
+    function createStageStats(stage) {
+        var msg = stream.create().message().message();
+        msg.property(TOTALCOUNT).set(stage[TOTALCOUNT]);
+        msg.property(CURRENTCOUNT).set(stage[CURRENTCOUNT]);
+        msg.property("late").set(stage.late);
+        for (var kpi in stage.kpis) {
+            msg.property(kpi + "_raw_total").set(stage.kpis[kpi].raw.total);
+            msg.property(kpi + "_raw_current").set(stage.kpis[kpi].raw.current);
+            msg.property(kpi + "_average").set(stage.kpis[kpi].average);
+        }
+        return msg;
+    }
+
+    function createLinkStats(link) {
+        var msg = stream.create().message().message();
+        msg.property(TOTALCOUNT).set(link[TOTALCOUNT]);
+        msg.property(DELAY).set(link[DELAY]);
+        for (var kpi in stage.kpis) {
+            msg.property(kpi + "_raw_total").set(link.kpis[kpi].raw.total);
+            msg.property(kpi + "_average").set(link.kpis[kpi].average);
+        }
+        return msg;
+    }
+
+
     // Init Requests
     stream.create().input(this.streamname).topic().selector("initrequest = true")
         .onInput(function (input) {
@@ -119,6 +197,7 @@ function handler() {
                     .body(JSON.stringify(self.msg))
             );
             out.close();
+            stream.log().info(JSON.stringify(data, null, 2));
         });
 
     stream.create().timer(this.compid + "_at_the_minute_starter").next().beginOfMinute().onTimer(function (t) {
@@ -169,7 +248,7 @@ function handler() {
     }
 
     // Static happy path
-    if (this.props["happypath"]) {
+    if (this.props["happypath"]&&this.props["happypath"].length > 0) {
         ensureStage(PROCESSSTART, this.props["processproperty"]);
         for (var i=0;i<this.props["happypath"].length; i++){
             ensureStage(this.props["happypath"][i], this.props["processproperty"]);
@@ -345,15 +424,7 @@ function handler() {
 
     // Send totals
     function sendTotals(){
-        var msg = stream.create().message().message();
-        msg.property("alertcount").set(alertcount);
-        msg.property("totalprocessed").set(data.totals.totalprocessed);
-        msg.property("intransit").set(data.totals.intransit);
-        for (var kpi in data.totals.kpis) {
-            msg.property(kpi+"_totalprocessed").set(data.totals.kpis[kpi].totalprocessed);
-            msg.property(kpi+"_intransit").set(data.totals.kpis[kpi].intransit);
-        }
-        self.executeOutputLink("Totals", msg);
+        self.executeOutputLink("Totals", createTotals());
     }
 
     // Checks whether a process with that key has already been started or
