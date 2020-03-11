@@ -1,5 +1,5 @@
 {
-  "description": "Predicts the average travel duration in milliseconds of a path defined by a source and a target stage. It returns the estimated average duration of the shortest path in milliseconds. The duration is -1 if the stages are not found or unreachable. It returns a reference to a message that contains the following properties: sourcestage, targetstage, path (stringified JSON array), duration.",
+  "description": "Predicts the average travel duration in milliseconds of a path defined by a source and a target stage. It returns the estimated average duration of the shortest path in milliseconds. The duration is -1 if the stages are not found or unreachable. It returns a reference to a message that contains the following properties: sourcestage, targetstage, duration.",
   "refs": {
     "input": [
       {

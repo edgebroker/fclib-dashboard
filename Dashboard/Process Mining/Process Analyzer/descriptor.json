@@ -20,6 +20,10 @@
       {
         "name": "StageUtilization",
         "type": "message"
+      },
+      {
+        "name": "Events",
+        "type": "message"
       }
     ]
   },
@@ -104,8 +108,45 @@
       ]
     },
     {
-      "name": "alerts",
-      "label": "Alerting",
+      "name": "stageevents",
+      "label": "Stage Events",
+      "description": "Define events per stage.",
+      "mandatory": false,
+      "type": "table",
+      "tablefields": [
+        {
+          "name": "stage",
+          "label": "Stage Name",
+          "description": "Provide the stage name.",
+          "mandatory": true,
+          "type": "string"
+        },
+        {
+          "name": "created",
+          "label": "Stage Created",
+          "description": "Check to fire an event when the stage is created.",
+          "type": "boolean",
+          "default" : false
+        },
+        {
+          "name": "checkin",
+          "label": "Process Checkin",
+          "description": "Check to fire an event when a process arrives at a stage.",
+          "type": "boolean",
+          "default" : false
+        },
+        {
+          "name": "checkout",
+          "label": "Process Checkout",
+          "description": "Check to fire an event when a process leaves a stage.",
+          "type": "boolean",
+          "default" : false
+        }
+      ]
+    },
+    {
+      "name": "alertevents",
+      "label": "Alert Events",
       "description": "Provide the maximum time for a process to stay at a specific stage. An alert is fired when this time is exceeded.",
       "mandatory": false,
       "type": "table",
@@ -138,6 +179,66 @@
             "Months"
           ],
           "default": "Minutes"
+        }
+      ]
+    },
+    {
+      "name": "linkevents",
+      "label": "Link Events",
+      "description": "Define events per link.",
+      "mandatory": false,
+      "type": "table",
+      "tablefields": [
+        {
+          "name": "sourcestage",
+          "label": "Source Stage",
+          "description": "Specify the name of the source stage of the link.",
+          "type": "string",
+          "mandatory": true
+        },
+        {
+          "name": "targetstage",
+          "label": "Target Stage",
+          "description": "Specify the name of the target stage of the link.",
+          "type": "string",
+          "mandatory": true
+        },
+        {
+          "name": "created",
+          "label": "Link Created",
+          "description": "Check to fire an event when the link is created.",
+          "type": "boolean",
+          "default" : false
+        },
+        {
+          "name": "travel",
+          "label": "Link Travel",
+          "description": "Check to fire an event when a process travels along this link.",
+          "type": "boolean",
+          "default" : false
+        }
+      ]
+    },
+    {
+      "name": "parallelstages",
+      "label": "Parallel Stages",
+      "description": "Define begin and end stages with parallel running stages in between. ",
+      "mandatory": false,
+      "type": "table",
+      "tablefields": [
+        {
+          "name": "beginstage",
+          "label": "Begin Stage",
+          "description": "Specify the name of the stage where subsequent stages start to run in parallel.",
+          "type": "string",
+          "mandatory": true
+        },
+        {
+          "name": "endstage",
+          "label": "End Stage",
+          "description": "Specify the name of the stage that parallel running stages join.",
+          "type": "string",
+          "mandatory": true
         }
       ]
     },

@@ -41,6 +41,7 @@ function handler() {
     };
 
     var Util = Java.type("com.swiftmq.util.SwiftUtilities");
+    var LONG = Java.type("java.lang.Long");
     var MEMPREFIX = this.compid + "_stage_";
     var PROCESSSTART = "Process Start";
     var PROCESSEXPIRED = "Process Expired";
@@ -51,6 +52,13 @@ function handler() {
     var TOTALCOUNT = "_totalcount";
     var CURRENTCOUNT = "_currentcount";
     var DELAY = "_delaysum";
+    var EVENT = "_event";
+    var EVENT_ALERT = "alert";
+    var EVENT_STAGE_CREATED = "stagecreated";
+    var EVENT_STAGE_CHECKIN = "stagecheckin";
+    var EVENT_STAGE_CHECKOUT = "stagecheckout";
+    var EVENT_LINK_CREATED = "linkcreated";
+    var EVENT_LINK_TRAVEL = "linktravel";
     var HISTORYMEM = this.compid + "_modelhistory";
     var SNAPSHOTTIMEPROP = "_snapshottime";
     var SHAREDQUEUE = this.flowcontext.getFlowQueue();
@@ -83,6 +91,7 @@ function handler() {
     var uniquePaths = [];
     var dirty = false;
     var expirationMS;
+    var events = [];
 
     data.key = this.props["processproperty"];
     for (var i = 0; i < self.props["kpis"].length; i++) {
@@ -92,8 +101,8 @@ function handler() {
             intransit: 0
         }
     }
-    for (i = 0; i < self.props["alerts"].length; i++) {
-        lateThresholds[self.props["alerts"][i].stage] = timeUnitToMillis(self.props["alerts"][i].thresholdvalue, self.props["alerts"][i].thresholdunit);
+    for (i = 0; i < self.props["alertevents"].length; i++) {
+        lateThresholds[self.props["alertevents"][i].stage] = timeUnitToMillis(self.props["alertevents"][i].thresholdvalue, self.props["alertevents"][i].thresholdunit);
     }
 
     newUpdateSet();
@@ -138,10 +147,42 @@ function handler() {
     };
 
     this.getPathEstimate = function(source, target) {
-        if (data.links[source] && data.links[source][target])
-            return createLinkStats(data.links[source][target]);
-        return null;
+        var estimate = Number.MAX_VALUE;
+        for (var i=0;i<uniquePaths.length;i++){
+           var p = subPath(uniquePaths[i].path, source, target);
+           if (p) {
+               var time = 0;
+               for (var j=0;j<p.length-1;j++) {
+                  time += data.links[p[j]][p[j+1]]._delaysum;
+               }
+               estimate = Math.min(estimate, time);
+           }
+        }
+        var msg = stream.create().message().message();
+        msg.property("sourcestage").set(source);
+        msg.property("targetstage").set(target);
+        msg.property("duration").set(estimate === Number.MAX_VALUE?-1:LONG.valueOf(estimate));
+        return msg;
     };
+
+    function subPath(path, source, target) {
+        var part;
+        for (var i=0;i<path.length;i++) {
+           if (!part) {
+               if (path[i] === source) {
+                   part = [];
+                   part.push(source);
+               }
+           } else {
+               part.push(path[i]);
+               if (path[i] === target)
+                   break;
+           }
+        }
+        if (part && part[part.length-1] === target)
+            return part;
+        return undefined;
+    }
 
     function createTotals() {
         var msg = stream.create().message().message();
@@ -230,6 +271,8 @@ function handler() {
     }
 
     function sendUpdate() {
+        self.getPathEstimate("Order Received", "Shipment Pickup");
+        self.getPathEstimate("Shipment Ready", "Shipment Delivered");
         updates.totals = data.totals;
         updates.model = data.model;
         updates.history = data.history;
@@ -344,11 +387,13 @@ function handler() {
 
     function checkLate(stage) {
         var cnt = 0;
+        var lateMsgs = [];
         if (lateThresholds[stage]) {
             var current = time.currentTime();
             stream.memory(MEMPREFIX + stage).forEach(function (msg){
                 if (current-msg.property(CHECKINTIME).value().toLong() > lateThresholds[stage]) {
                     cnt++;
+                    lateMsgs.push(msg);
                 }
             });
         }
@@ -356,6 +401,9 @@ function handler() {
             data.stages[stage].late = cnt;
             updates.stages.update[stage] = JSON.parse(JSON.stringify(data.stages[stage]));
             dirty = true;
+            lateMsgs.forEach(function(m){
+                storeEvent(EVENT_ALERT, m);
+            })
         }
         alertcount += cnt;
     }
@@ -419,12 +467,50 @@ function handler() {
             processMessage(msg);
         }
         sendTotals();
+        sendEvents();
         dirty = true;
     };
 
     // Send totals
     function sendTotals(){
         self.executeOutputLink("Totals", createTotals());
+    }
+
+    // store event
+    function storeEvent(event, message){
+        var eventMsg = stream.create().message().copyMessage(message);
+        eventMsg.property(EVENT).set(event);
+        events.push(eventMsg);
+    }
+
+    // Send events that were stored during this run
+    function sendEvents(){
+        events.forEach(function(e){
+            self.executeOutputLink("Events", e);
+        });
+        events = [];
+    }
+
+    function stageEvent(stage) {
+        if (self.props["stageevents"]){
+            for (var i=0;i<self.props["stageevents"].length; i++) {
+                var event = self.props["stageevents"][i];
+                if (event.stage === stage)
+                    return event;
+            }
+        }
+        return undefined;
+    }
+
+    function linkEvent(source, target) {
+        if (self.props["linkevents"]){
+            for (var i=0;i<self.props["linkevents"].length; i++) {
+                var event = self.props["linkevents"][i];
+                if (event.sourcestage === source && event.targetstage === target)
+                    return event;
+            }
+        }
+        return undefined;
     }
 
     // Checks whether a process with that key has already been started or
@@ -472,6 +558,13 @@ function handler() {
         if (!updates.links.update[source.stage])
             updates.links.update[source.stage] = {};
         updates.links.update[source.stage][target.stage] = linkCopy;
+        var e = linkEvent(source, target);
+        if (e && e.travel) {
+            var event = stream.create().message().copyMessage(message);
+            event.property("sourcestage").set(source);
+            event.property("targetstage").set(target);
+            storeEvent(EVENT_LINK_TRAVEL, event);
+        }
     }
 
     // Ensures that a link exists
@@ -493,6 +586,13 @@ function handler() {
                 };
             }
             updates.links.add[source] = JSON.parse(JSON.stringify(data.links[source]));
+            var e = linkEvent(source, target);
+            if (e && e.created) {
+                var event = stream.create().message().message();
+                event.property("sourcestage").set(source);
+                event.property("targetstage").set(target);
+                storeEvent(EVENT_LINK_CREATED, event);
+            }
         }
     }
 
@@ -526,6 +626,9 @@ function handler() {
             if (prevMessage.property(PATH).exists())
                 path = JSON.parse(prevMessage.property(PATH).value().toString());
             rc = {stage: prevStage, time: checkinTime, path: path};
+            var e = stageEvent(prevStage);
+            if (e && e.checkout)
+                storeEvent(EVENT_STAGE_CHECKOUT, message);
         }
         return rc;
     }
@@ -570,6 +673,9 @@ function handler() {
             utilization.property("current").set(1);
             self.executeOutputLink("StageUtilization", utilization);
         }
+        var e = stageEvent(name);
+        if (e && e.checkin)
+            storeEvent(EVENT_STAGE_CHECKIN, message);
         return {stage: name, time: message.property(CHECKINTIME).value().toLong()};
     }
 
@@ -621,6 +727,12 @@ function handler() {
             data.stages[name] = stage;
             if (name !== PROCESSEND)
                 stream.create().memory(MEMPREFIX + name).heap().createIndex(processprop);
+            var e = stageEvent(name);
+            if (e && e.created) {
+                var event = stream.create().message().message();
+                event.property("stage").set(name);
+                storeEvent(EVENT_STAGE_CREATED, event);
+            }
             return true;
         }
         return false;
