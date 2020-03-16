@@ -638,7 +638,7 @@ function handler() {
         var processprop = self.props["processproperty"];
         var isUpdate = !ensureStage(name, processprop);
 
-        path.push(name);
+        path.push([name]);
         message.property(PATH).set(JSON.stringify(path));
         maintainUniquePaths(path);
 
@@ -693,16 +693,13 @@ function handler() {
         }
         if (!found)
             uniquePaths.push({path: path.slice(0)});
+        stream.log().info("uniquePaths: "+JSON.stringify(uniquePaths, null, 2));
     }
 
     // Checks whether both paths are equal
     function samePath(a, b) {
         var to = Math.min(a.length, b.length);
-        for (var i = 0; i < to; i++) {
-            if (a[i] !== b[i])
-                return false;
-        }
-        return true;
+        return JSON.stringify(a.slice(0, to)) === JSON.stringify(b.slice(0, to));
     }
 
     // Ensures that a stage exists
@@ -787,6 +784,7 @@ function handler() {
           pt["statichappypath"] = true;
           data.paths[TOTALCOUNT].splice(0,0,pt);
         }
+        stream.log().info("generateAllPaths: "+JSON.stringify(data.paths, null, 2));
      }
 
     // Weight the KPI paths
