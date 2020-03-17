@@ -238,7 +238,6 @@ function handler() {
                     .body(JSON.stringify(self.msg))
             );
             out.close();
-            stream.log().info(JSON.stringify(data, null, 2));
         });
 
     stream.create().timer(this.compid + "_at_the_minute_starter").next().beginOfMinute().onTimer(function (t) {
@@ -638,7 +637,7 @@ function handler() {
         var processprop = self.props["processproperty"];
         var isUpdate = !ensureStage(name, processprop);
 
-        path.push([name]);
+        path.push(name);
         message.property(PATH).set(JSON.stringify(path));
         maintainUniquePaths(path);
 
@@ -693,7 +692,6 @@ function handler() {
         }
         if (!found)
             uniquePaths.push({path: path.slice(0)});
-        stream.log().info("uniquePaths: "+JSON.stringify(uniquePaths, null, 2));
     }
 
     // Checks whether both paths are equal
@@ -784,7 +782,6 @@ function handler() {
           pt["statichappypath"] = true;
           data.paths[TOTALCOUNT].splice(0,0,pt);
         }
-        stream.log().info("generateAllPaths: "+JSON.stringify(data.paths, null, 2));
      }
 
     // Weight the KPI paths

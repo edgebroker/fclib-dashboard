@@ -220,29 +220,6 @@
       ]
     },
     {
-      "name": "parallelstages",
-      "label": "Parallel Stages",
-      "description": "Define begin and end stages with parallel running stages in between. ",
-      "mandatory": false,
-      "type": "table",
-      "tablefields": [
-        {
-          "name": "beginstage",
-          "label": "Begin Stage",
-          "description": "Specify the name of the stage where subsequent stages start to run in parallel.",
-          "type": "string",
-          "mandatory": true
-        },
-        {
-          "name": "endstage",
-          "label": "End Stage",
-          "description": "Specify the name of the stage that parallel running stages join.",
-          "type": "string",
-          "mandatory": true
-        }
-      ]
-    },
-    {
       "name": "stageexpirationvalue",
       "label": "Stage Expiration Value",
       "description": "A process will expire after this time at a stage and is being moved via Process Expired to Process End. 0 means no expiration",
