@@ -41,7 +41,6 @@ function handler() {
     };
 
     var Util = Java.type("com.swiftmq.util.SwiftUtilities");
-    var LONG = Java.type("java.lang.Long");
     var MEMPREFIX = this.compid + "_stage_";
     var PROCESSSTART = "Process Start";
     var PROCESSEXPIRED = "Process Expired";
@@ -162,7 +161,7 @@ function handler() {
         var msg = stream.create().message().message();
         msg.property("sourcestage").set(source);
         msg.property("targetstage").set(target);
-        msg.property("duration").set(estimate === Number.MAX_VALUE ? -1 : LONG.valueOf(estimate));
+        msg.property("duration").set(estimate === Number.MAX_VALUE ? -1 : typeconvert.toLong(estimate));
         return msg;
     };
 
