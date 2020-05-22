@@ -1,0 +1,40 @@
+{
+  "description": "Checks the process model if the named stage is defined and calls the appropriate output with the input message.",
+  "links": {
+    "input": [
+      {
+        "name": "In",
+        "type": "message",
+        "mandatory": true
+      }
+    ],
+    "output": [
+      {
+        "name": "Yes",
+        "type": "message"
+      },
+      {
+        "name": "No",
+        "type": "message"
+      }
+    ]
+  },
+  "refs": {
+    "input": [
+      {
+        "name": "Process Model",
+        "type": "processmodel",
+        "mandatory": true
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "stage",
+      "label": "Stage",
+      "description": "Specify the name of the stage.",
+      "type": "string",
+      "mandatory": true
+    }
+  ]
+}

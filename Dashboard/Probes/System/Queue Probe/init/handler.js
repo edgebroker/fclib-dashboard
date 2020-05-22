@@ -32,7 +32,7 @@ function handler() {
             var name = input.current().property("name").value().toString();
             if (name.startsWith("tmp$"))
                 self.tmpcount++;
-            else if (name.contains("$") ||
+            else if (name.indexOf("$") !== -1 ||
                 name.startsWith("swiftmq") || name.startsWith("streams_") ||
                 name.startsWith("unroutable") || name.startsWith("routerdlq"))
                 self.syscount++;
@@ -43,7 +43,7 @@ function handler() {
             var name = input.current().property("name").value().toString();
             if (name.startsWith("tmp$"))
                 self.tmpcount--;
-            else if (name.contains("$") ||
+            else if (name.indexOf("$") !== -1 ||
                 name.startsWith("swiftmq") || name.startsWith("streams_") ||
                 name.startsWith("unroutable") || name.startsWith("routerdlq"))
                 self.syscount--;

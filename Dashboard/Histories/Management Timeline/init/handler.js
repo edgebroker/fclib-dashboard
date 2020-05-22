@@ -51,7 +51,6 @@ function handler() {
             }
         })
         .onRemove(function (input) {
-            stream.log().info(input.current());
             if (input.current().property(self.groupProp).exists())
                 deactivated(input.current().property(self.groupProp).value().toObject());
         });

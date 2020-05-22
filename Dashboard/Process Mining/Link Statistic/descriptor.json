@@ -1,0 +1,34 @@
+{
+  "description": "Returns a reference to a message with the process model statistics. The following properties are set: _totalcount, _delaysum. For each KPI value: <kpi-propertyname>_raw_total, <kpi-propertyname>_average.",
+  "refs": {
+    "input": [
+      {
+        "name": "Process Model",
+        "type": "processmodel",
+        "mandatory": true
+      }
+    ],
+    "output": [
+      {
+        "name": "Link Statistic",
+        "type": "message"
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "sourcestage",
+      "label": "Source Stage",
+      "description": "Specify the name of the source stage of the link.",
+      "type": "string",
+      "mandatory": true
+    },
+    {
+      "name": "targetstage",
+      "label": "Target Stage",
+      "description": "Specify the name of the target stage of the link.",
+      "type": "string",
+      "mandatory": true
+    }
+  ]
+}

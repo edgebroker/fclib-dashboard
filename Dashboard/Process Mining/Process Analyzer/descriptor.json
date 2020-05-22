@@ -20,6 +20,18 @@
       {
         "name": "StageUtilization",
         "type": "message"
+      },
+      {
+        "name": "Events",
+        "type": "message"
+      }
+    ]
+  },
+  "refs": {
+    "output": [
+      {
+        "name": "Process Model",
+        "type": "processmodel"
       }
     ]
   },
@@ -64,9 +76,18 @@
       ]
     },
     {
+      "name": "happypath",
+      "label": "Happy Path",
+      "description": "Specify all stage names that make up the happy path. This is the most optimal way of a process. This is optional. If not specified, the component computes it automatically by using 'sum total / number stages'.",
+      "type": "array",
+      "fieldtypes": [
+        "string"
+      ]
+    },
+    {
       "name": "kpis",
-      "label": "Key Performance Indicators (KPI)",
-      "description": "Provide the KPI properties contained in the input messages. These properties must have a numeric value.",
+      "label": "Key Performance Indicator Values (KPI Values)",
+      "description": "Provide the KPI value properties contained in the input messages. These properties must have a numeric value.",
       "mandatory": false,
       "type": "table",
       "tablefields": [
@@ -87,8 +108,45 @@
       ]
     },
     {
-      "name": "alerts",
-      "label": "Alerting",
+      "name": "stageevents",
+      "label": "Stage Events",
+      "description": "Define events per stage.",
+      "mandatory": false,
+      "type": "table",
+      "tablefields": [
+        {
+          "name": "stage",
+          "label": "Stage Name",
+          "description": "Provide the stage name.",
+          "mandatory": true,
+          "type": "string"
+        },
+        {
+          "name": "created",
+          "label": "Stage Created",
+          "description": "Check to fire an event when the stage is created.",
+          "type": "boolean",
+          "default" : false
+        },
+        {
+          "name": "checkin",
+          "label": "Process Checkin",
+          "description": "Check to fire an event when a process arrives at a stage.",
+          "type": "boolean",
+          "default" : false
+        },
+        {
+          "name": "checkout",
+          "label": "Process Checkout",
+          "description": "Check to fire an event when a process leaves a stage.",
+          "type": "boolean",
+          "default" : false
+        }
+      ]
+    },
+    {
+      "name": "alertevents",
+      "label": "Alert Events",
       "description": "Provide the maximum time for a process to stay at a specific stage. An alert is fired when this time is exceeded.",
       "mandatory": false,
       "type": "table",
@@ -121,6 +179,43 @@
             "Months"
           ],
           "default": "Minutes"
+        }
+      ]
+    },
+    {
+      "name": "linkevents",
+      "label": "Link Events",
+      "description": "Define events per link.",
+      "mandatory": false,
+      "type": "table",
+      "tablefields": [
+        {
+          "name": "sourcestage",
+          "label": "Source Stage",
+          "description": "Specify the name of the source stage of the link.",
+          "type": "string",
+          "mandatory": true
+        },
+        {
+          "name": "targetstage",
+          "label": "Target Stage",
+          "description": "Specify the name of the target stage of the link.",
+          "type": "string",
+          "mandatory": true
+        },
+        {
+          "name": "created",
+          "label": "Link Created",
+          "description": "Check to fire an event when the link is created.",
+          "type": "boolean",
+          "default" : false
+        },
+        {
+          "name": "travel",
+          "label": "Link Travel",
+          "description": "Check to fire an event when a process travels along this link.",
+          "type": "boolean",
+          "default" : false
         }
       ]
     },

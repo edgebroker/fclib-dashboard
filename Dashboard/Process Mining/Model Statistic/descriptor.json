@@ -1,0 +1,20 @@
+{
+  "description": "Returns a reference to a message with the process model statistics. The following properties are set: alertcount, totalprocessed, intransit. For each KPI value: <kpi-propertyname>_totalprocessed, <kpi-propertyname>_intransit.",
+  "refs": {
+    "input": [
+      {
+        "name": "Process Model",
+        "type": "processmodel",
+        "mandatory": true
+      }
+    ],
+    "output": [
+      {
+        "name": "Model Statistic",
+        "type": "message"
+      }
+    ]
+  },
+  "properties": [
+  ]
+}
