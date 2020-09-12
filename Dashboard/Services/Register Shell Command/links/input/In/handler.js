@@ -5,7 +5,8 @@ function handler(In) {
         .property("description").set(this.props["description"])
         .property("referencelabelkey").set(this.props["referencelabelkey"])
         .property("referencevaluekey").set(this.props["referencevaluekey"])
-        .property("handlerest").set(this.props["handlerest"]);
+        .property("handlerest").set(this.props["handlerest"])
+        .property("requestmethod").set(this.props["requestmethod"]);
     if (this.props["resttopic"])
         outMsg.property("resttopic").set(this.props["resttopic"]);
     this.executeOutputLink("Out", outMsg);

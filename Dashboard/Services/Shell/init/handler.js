@@ -102,9 +102,9 @@ function handler() {
         stream.memory(self.compid + "_commands").add(msg);
         if (request.property("handlerest").value().toBoolean() === true){
             if (request.property("resttopic").exists())
-                createRestHandler(command, JSON.parse(parms), request.property("resttopic").value().toString());
+                createRestHandler(request.property("requestmethod").value().toString(), command, JSON.parse(parms), request.property("resttopic").value().toString());
             else
-                createRestHandler(command, JSON.parse(parms), stream.domainName() + "." + command);
+                createRestHandler(request.property("requestmethod").value().toString(), command, JSON.parse(parms), stream.domainName() + "." + command);
         }
     };
 
@@ -113,15 +113,16 @@ function handler() {
         stream.memory(self.compid + "_commands").index("command").remove(command);
     };
 
-    function createRestHandler(command, parmNames, resttopic) {
-        stream.log().info("Create REST handler for command '"+command+"' on topic: "+resttopic);
+    function createRestHandler(method, command, parmNames, resttopic) {
+        stream.log().info("Create REST handler for command '"+command+"' on topic: "+resttopic+" with "+method);
         stream.create().input(resttopic).topic().onInput(function(input){
-            var rid = nextRestId();
-            input.current().property("restid").set(rid);
-            var cmdArray = [command];
-            var parm = JSON.parse(input.current().body())._params;
-            collectCommandParams(cmdArray, parmNames, parm);
-            stream.log().info("REST command on topic "+resttopic+": "+JSON.stringify(cmdArray));
+            if (method === "Any" || method === input.current().property("operation").value().toString()) {
+                var rid = nextRestId();
+                input.current().property("restid").set(rid);
+                var cmdArray = [command];
+                var parm = JSON.parse(input.current().body())._params;
+                collectCommandParams(cmdArray, parmNames, parm);
+                stream.log().info("REST command on topic " + resttopic + ": " + JSON.stringify(cmdArray));
                 var result = forwardCommand(cmdArray, stream.tempQueue(self.compid + "-restreply").destination(), rid);
                 if (result !== null) {
                     sendRestReply(input.current(), JSON.stringify({
@@ -130,6 +131,7 @@ function handler() {
                     }))
                 } else
                     stream.memory(self.compid + "_restrequests").add(input.current());
+            }
         }).start();
     }
 
