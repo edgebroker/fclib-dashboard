@@ -82,8 +82,7 @@ function handler() {
         if (result.size() > 0) {
             var originalRequest = result.first();
             var shellResult = JSON.parse(input.current().body());
-            stream.log().info("Original body: "+input.current().body());
-            var replyResult = "{ \"message\": " + (shellResult.body.message.length === 1 ? "\""+shellResult.body.message[0]+"\"" : shellResult.body.message[1]) + " }";
+            var replyResult = "{ \"message\": " + (shellResult.body.message.length === 1 ? quoteString(shellResult.body.message[0]) : quoteString(shellResult.body.message[1])) + " }";
             sendRestReply(originalRequest, replyResult);
         }
     });
@@ -134,6 +133,12 @@ function handler() {
                     stream.memory(self.compid + "_restrequests").add(input.current());
             }
         }).start();
+    }
+
+    function quoteString(s) {
+        if (typeof s === 'string')
+            return "\""+s+"\"";
+        return s;
     }
 
     function collectCommandParams(cmdArray, parmNames, body) {
