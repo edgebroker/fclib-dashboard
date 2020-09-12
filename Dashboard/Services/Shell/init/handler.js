@@ -84,9 +84,12 @@ function handler() {
             var originalRequest = result.first();
             var shellResult = JSON.parse(input.current().body());
             var replyResult = {
-                "_http_code": shellResult[0] === "Error:"? 400:200,
-                "message": shellResult.body.message[1]
+                _http_code: shellResult[0] === "Error:"? 400:200,
+                message: shellResult.body.message[1]
             };
+            try {
+                replyResult.message = JSON.parse(replyResult.message);
+            } catch (e) {}
             sendRestReply(originalRequest, JSON.stringify(replyResult));
         }
     });
