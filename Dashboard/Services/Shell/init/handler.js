@@ -80,6 +80,7 @@ function handler() {
         var rid = input.current().correlationId();
         var result = stream.memory(self.compid + "_restrequests").index("restid").get(rid);
         if (result.size() > 0) {
+            stream.memory(self.compid + "_restrequests").index("restid").remove(rid);
             var originalRequest = result.first();
             var shellResult = JSON.parse(input.current().body());
             var replyResult = {
