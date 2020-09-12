@@ -41,6 +41,19 @@
       "label": "Reference Value Key",
       "description": "Item key that provides the value when referenced",
       "type": "string"
+    },
+    {
+      "name": "handlerest",
+      "label": "Handle REST Requests",
+      "description": "Creates a REST handler for this command and serves REST requests",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "name": "resttopic",
+      "label": "REST Topic Name",
+      "description": "If not specified (default), the shell registers a REST handler on topic <appname>.<commandname>. Otherwise, on that specified topic. It consumes the REST requests and executes this shell command.",
+      "type": "string"
     }
   ]
 }

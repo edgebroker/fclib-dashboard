@@ -49,13 +49,14 @@ function handler() {
         field("getcommandmeta", WIDTH_L, ' ') + "| " + field("Returns the meta data for a command", WIDTH_R, ' '),
         field("  <command>", WIDTH_L, ' ') + "| " + field("  Command name", WIDTH_R, ' ')
     ];
-
+    var restid = 0;
 
     stream.create().output(this.registryTopic).topic();
     stream.create().output(this.metaRegistryTopic).topic();
     stream.create().output(this.streamname).topic();
 
     stream.create().memory(this.compid + "_commands").heap().createIndex("command");
+    stream.create().memory(this.compid + "_restrequests").heap().createIndex("restid");
 
     // Init Requests
     stream.create().input(this.compid + "_initrequests").topic().destinationName(this.streamname).selector("initrequest = true")
@@ -74,6 +75,18 @@ function handler() {
             out.close();
         });
 
+    // Command Replies to be forwarded as REST replies
+    stream.create().input(stream.create().tempQueue(this.compid + "-restreply")).queue().onInput(function (input) {
+        var rid = input.current().correlationId();
+        var result = stream.memory(self.compid + "_restrequests").index("restid").get(rid);
+        if (result.size() > 0) {
+           var originalRequest = result.first();
+           var shellResult = JSON.parse(input.current().body());
+           var replyResult = "{ \"message\": "+ (shellResult.body.message.length === 1 ? shellResult.body.message[0] : shellResult.body.message[1])+" }";
+           sendRestReply(originalRequest, replyResult);
+        }
+    });
+
     this.registerCommand = function (request) {
         var command = request.property("command").value().toString();
         var description = request.property("description").value().toString();
@@ -85,9 +98,14 @@ function handler() {
           .property("description").set(description)
           .property("referencelabelkey").set(referenceLabelKey)
           .property("referencevaluekey").set(referenceValueKey)
-          .property("parameters").set(parms)
-        ;
+          .property("parameters").set(parms);
         stream.memory(self.compid + "_commands").add(msg);
+        if (request.property("handlerest").value().toBoolean() === true){
+            if (request.property("resttopic").exists())
+                createRestHandler(command, JSON.parse(parms), request.property("resttopic").value().toString());
+            else
+                createRestHandler(command, JSON.parse(parms), stream.domainName() + "." + command);
+        }
     };
 
     this.unregisterCommand = function (request) {
@@ -95,6 +113,49 @@ function handler() {
         stream.memory(self.compid + "_commands").index("command").remove(command);
     };
 
+    function createRestHandler(command, parmNames, resttopic) {
+        stream.log().info("Create REST handler for command '"+command+"' on topic: "+resttopic);
+        stream.create().input(resttopic).topic().onInput(function(input){
+            var rid = nextRestId();
+            input.current().property("restid").set(rid);
+            var cmdArray = [command];
+            var parm = JSON.parse(input.current().body())._params;
+            collectCommandParams(cmdArray, parmNames, parm);
+            stream.log().info("REST command on topic "+resttopic+": "+JSON.stringify(cmdArray));
+                var result = forwardCommand(cmdArray, stream.tempQueue(self.compid + "-restreply").destination(), rid);
+                if (result !== null) {
+                    sendRestReply(input.current(), JSON.stringify({
+                        "_http_status": 400,
+                        "message": result[1]
+                    }))
+                } else
+                    stream.memory(self.compid + "_restrequests").add(input.current());
+        }).start();
+    }
+
+    function collectCommandParams(cmdArray, parmNames, parm) {
+        parmNames.forEach(function(p){
+           cmdArray.push(parm[p.name]?parm[p.name]:"-");
+        });
+    }
+
+    function nextRestId() {
+        if (restid === Number.MAX_VALUE)
+            restid = 0;
+        else
+            restid++;
+        return "rid-"+restid;
+    }
+
+    function sendRestReply(originalRequest, replyResult) {
+        var reply = stream.create().message().textMessage();
+        reply.replyTo(originalRequest.replyTo())
+            .correlationId(originalRequest.correlationId())
+            .body(replyResult);
+        var out = stream.create().output(null).forAddress(originalRequest.replyTo());
+        out.send(reply);
+        out.close();
+    }
 
     function help() {
         var s = shellCommands.slice();
@@ -210,7 +271,7 @@ function handler() {
         return result;
     }
 
-    function forwardCommand(cmd, cmdMsg) {
+    function forwardCommand(cmd, replyto, correlationid) {
         var mem = stream.memory(self.compid + "_commands").index("command").get(cmd[0]);
         if (mem.size() === 0)
             return ["Error:", "Unknown command: " + cmd[0]];
@@ -219,8 +280,8 @@ function handler() {
             var parms = JSON.parse(stream.memory(self.compid + "_commands").index("command").get(cmd[0]).first().property("parameters").value().toString());
             var result = fillParameters(cmd, parms);
             var fwdMsg = stream.create().message().textMessage()
-                .replyTo(cmdMsg.replyTo())
-                .correlationId(cmdMsg.correlationId())
+                .replyTo(replyto)
+                .correlationId(correlationid)
                 .property("streamdata").set(true)
                 .property("streamname").set(self.streamname)
                 .property("command").set(cmd[0]);
@@ -285,7 +346,7 @@ function handler() {
                     result = getCommandMeta(cmd);
                     break;
                 default:
-                    result = forwardCommand(cmd, cmdMsg);
+                    result = forwardCommand(cmd, cmdMsg.replyTo(), cmdMsg.correlationId());
                     handled = result !== null;
                     break;
             }
