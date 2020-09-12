@@ -47,7 +47,7 @@
       "label": "Handle REST Requests",
       "description": "Creates a REST handler for this command and serves REST requests",
       "type": "boolean",
-      "default": true
+      "default": false
     },
     {
       "name": "requestmethod",
