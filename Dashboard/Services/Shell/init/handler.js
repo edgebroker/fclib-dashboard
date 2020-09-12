@@ -80,10 +80,10 @@ function handler() {
         var rid = input.current().correlationId();
         var result = stream.memory(self.compid + "_restrequests").index("restid").get(rid);
         if (result.size() > 0) {
-           var originalRequest = result.first();
-           var shellResult = JSON.parse(input.current().body());
-           var replyResult = "{ \"message\": "+ (shellResult.body.message.length === 1 ? shellResult.body.message[0] : shellResult.body.message[1])+" }";
-           sendRestReply(originalRequest, replyResult);
+            var originalRequest = result.first();
+            var shellResult = JSON.parse(input.current().body());
+            var replyResult = "{ \"message\": " + (shellResult.body.message.length === 1 ? shellResult.body.message[0] : shellResult.body.message[1]) + " }";
+            sendRestReply(originalRequest, replyResult);
         }
     });
 
@@ -94,13 +94,13 @@ function handler() {
         var referenceValueKey = request.property("referencevaluekey").exists() ? request.property("referencevaluekey").value().toString() : "";
         var parms = request.property("parameters").exists() ? request.property("parameters").value().toString() : "[]";
         var msg = stream.create().message().message()
-          .property("command").set(command)
-          .property("description").set(description)
-          .property("referencelabelkey").set(referenceLabelKey)
-          .property("referencevaluekey").set(referenceValueKey)
-          .property("parameters").set(parms);
+            .property("command").set(command)
+            .property("description").set(description)
+            .property("referencelabelkey").set(referenceLabelKey)
+            .property("referencevaluekey").set(referenceValueKey)
+            .property("parameters").set(parms);
         stream.memory(self.compid + "_commands").add(msg);
-        if (request.property("handlerest").value().toBoolean() === true){
+        if (request.property("handlerest").value().toBoolean() === true) {
             if (request.property("resttopic").exists())
                 createRestHandler(request.property("requestmethod").value().toString(), command, JSON.parse(parms), request.property("resttopic").value().toString());
             else
@@ -114,14 +114,14 @@ function handler() {
     };
 
     function createRestHandler(method, command, parmNames, resttopic) {
-        stream.log().info("Create REST handler for command '"+command+"' on topic: "+resttopic+" with "+method);
-        stream.create().input(resttopic).topic().onInput(function(input){
+        stream.log().info("Create REST handler for command '" + command + "' on topic: " + resttopic + " with " + method);
+        stream.create().input(resttopic).topic().onInput(function (input) {
             if (method === "Any" || method === input.current().property("operation").value().toString()) {
                 var rid = nextRestId();
                 input.current().property("restid").set(rid);
                 var cmdArray = [command];
-                var parm = JSON.parse(input.current().body())._params;
-                collectCommandParams(cmdArray, parmNames, parm);
+                var body = JSON.parse(input.current().body());
+                collectCommandParams(cmdArray, parmNames, body);
                 stream.log().info("REST command on topic " + resttopic + ": " + JSON.stringify(cmdArray));
                 var result = forwardCommand(cmdArray, stream.tempQueue(self.compid + "-restreply").destination(), rid);
                 if (result !== null) {
@@ -135,9 +135,14 @@ function handler() {
         }).start();
     }
 
-    function collectCommandParams(cmdArray, parmNames, parm) {
-        parmNames.forEach(function(p){
-           cmdArray.push(parm[p.name]?parm[p.name]:"-");
+    function collectCommandParams(cmdArray, parmNames, body) {
+        parmNames.forEach(function (p) {
+            var value = "-";
+            if (body[p.name])
+                value = body[p.name];
+            else if (body._params && body._params[p.name])
+                value = body._params[p.name];
+            cmdArray.push(value);
         });
     }
 
@@ -146,7 +151,7 @@ function handler() {
             restid = 0;
         else
             restid++;
-        return "rid-"+restid;
+        return "rid-" + restid;
     }
 
     function sendRestReply(originalRequest, replyResult) {
@@ -287,7 +292,7 @@ function handler() {
                 .property("streamdata").set(true)
                 .property("streamname").set(self.streamname)
                 .property("command").set(cmd[0]);
-            result.forEach(function(keyval){
+            result.forEach(function (keyval) {
                 fwdMsg.property(keyval.name).set(keyval.value);
             });
             self.executeOutputLink(cmd[0], fwdMsg);
