@@ -155,6 +155,7 @@ function handler() {
     }
 
     function sendRestReply(originalRequest, replyResult) {
+        stream.log().info(replyResult);
         var reply = stream.create().message().textMessage();
         reply.replyTo(originalRequest.replyTo())
             .correlationId(originalRequest.correlationId())
