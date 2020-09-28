@@ -49,13 +49,14 @@ function handler() {
         field("getcommandmeta", WIDTH_L, ' ') + "| " + field("Returns the meta data for a command", WIDTH_R, ' '),
         field("  <command>", WIDTH_L, ' ') + "| " + field("  Command name", WIDTH_R, ' ')
     ];
-
+    var restid = 0;
 
     stream.create().output(this.registryTopic).topic();
     stream.create().output(this.metaRegistryTopic).topic();
     stream.create().output(this.streamname).topic();
 
     stream.create().memory(this.compid + "_commands").heap().createIndex("command");
+    stream.create().memory(this.compid + "_restrequests").heap().createIndex("restid");
 
     // Init Requests
     stream.create().input(this.compid + "_initrequests").topic().destinationName(this.streamname).selector("initrequest = true")
@@ -74,6 +75,25 @@ function handler() {
             out.close();
         });
 
+    // Command Replies to be forwarded as REST replies
+    stream.create().input(stream.create().tempQueue(this.compid + "-restreply")).queue().onInput(function (input) {
+        var rid = input.current().correlationId();
+        var result = stream.memory(self.compid + "_restrequests").index("restid").get(rid);
+        if (result.size() > 0) {
+            stream.memory(self.compid + "_restrequests").index("restid").remove(rid);
+            var originalRequest = result.first();
+            var shellResult = JSON.parse(input.current().body());
+            var replyResult = {
+                _http_code: shellResult[0] === "Error:"? 400:200,
+                message: shellResult.body.message[1]
+            };
+            try {
+                replyResult.message = JSON.parse(replyResult.message);
+            } catch (e) {}
+            sendRestReply(originalRequest, JSON.stringify(replyResult));
+        }
+    });
+
     this.registerCommand = function (request) {
         var command = request.property("command").value().toString();
         var description = request.property("description").value().toString();
@@ -81,13 +101,18 @@ function handler() {
         var referenceValueKey = request.property("referencevaluekey").exists() ? request.property("referencevaluekey").value().toString() : "";
         var parms = request.property("parameters").exists() ? request.property("parameters").value().toString() : "[]";
         var msg = stream.create().message().message()
-          .property("command").set(command)
-          .property("description").set(description)
-          .property("referencelabelkey").set(referenceLabelKey)
-          .property("referencevaluekey").set(referenceValueKey)
-          .property("parameters").set(parms)
-        ;
+            .property("command").set(command)
+            .property("description").set(description)
+            .property("referencelabelkey").set(referenceLabelKey)
+            .property("referencevaluekey").set(referenceValueKey)
+            .property("parameters").set(parms);
         stream.memory(self.compid + "_commands").add(msg);
+        if (request.property("handlerest").value().toBoolean() === true) {
+            if (request.property("resttopic").exists())
+                createRestHandler(request.property("requestmethod").value().toString(), command, JSON.parse(parms), request.property("resttopic").value().toString());
+            else
+                createRestHandler(request.property("requestmethod").value().toString(), command, JSON.parse(parms), stream.domainName() + "." + command);
+        }
     };
 
     this.unregisterCommand = function (request) {
@@ -95,6 +120,57 @@ function handler() {
         stream.memory(self.compid + "_commands").index("command").remove(command);
     };
 
+    function createRestHandler(method, command, parmNames, resttopic) {
+        stream.log().info("Create REST handler for command '" + command + "' on topic: " + resttopic + " with " + method);
+        stream.create().input(resttopic).topic().onInput(function (input) {
+            if (method === "Any" || method === input.current().property("operation").value().toString()) {
+                var rid = nextRestId();
+                input.current().property("restid").set(rid);
+                var cmdArray = [command];
+                var body = JSON.parse(input.current().body());
+                collectCommandParams(cmdArray, parmNames, body);
+                stream.log().info("REST command on topic " + resttopic + ": " + JSON.stringify(cmdArray));
+                var result = forwardCommand(cmdArray, stream.tempQueue(self.compid + "-restreply").destination(), rid);
+                if (result !== null) {
+                    sendRestReply(input.current(), JSON.stringify({
+                        "_http_status": 400,
+                        "message": result[1]
+                    }))
+                } else
+                    stream.memory(self.compid + "_restrequests").add(input.current());
+            }
+        }).start();
+    }
+
+    function collectCommandParams(cmdArray, parmNames, body) {
+        parmNames.forEach(function (p) {
+            var value = "-";
+            if (body[p.name])
+                value = body[p.name];
+            else if (body._params && body._params[p.name])
+                value = body._params[p.name];
+            cmdArray.push(value);
+        });
+    }
+
+    function nextRestId() {
+        if (restid === Number.MAX_VALUE)
+            restid = 0;
+        else
+            restid++;
+        return "rid-" + restid;
+    }
+
+    function sendRestReply(originalRequest, replyResult) {
+        stream.log().info(replyResult);
+        var reply = stream.create().message().textMessage();
+        reply.replyTo(originalRequest.replyTo())
+            .correlationId(originalRequest.correlationId())
+            .body(replyResult);
+        var out = stream.create().output(null).forAddress(originalRequest.replyTo());
+        out.send(reply);
+        out.close();
+    }
 
     function help() {
         var s = shellCommands.slice();
@@ -210,7 +286,7 @@ function handler() {
         return result;
     }
 
-    function forwardCommand(cmd, cmdMsg) {
+    function forwardCommand(cmd, replyto, correlationid) {
         var mem = stream.memory(self.compid + "_commands").index("command").get(cmd[0]);
         if (mem.size() === 0)
             return ["Error:", "Unknown command: " + cmd[0]];
@@ -219,12 +295,12 @@ function handler() {
             var parms = JSON.parse(stream.memory(self.compid + "_commands").index("command").get(cmd[0]).first().property("parameters").value().toString());
             var result = fillParameters(cmd, parms);
             var fwdMsg = stream.create().message().textMessage()
-                .replyTo(cmdMsg.replyTo())
-                .correlationId(cmdMsg.correlationId())
+                .replyTo(replyto)
+                .correlationId(correlationid)
                 .property("streamdata").set(true)
                 .property("streamname").set(self.streamname)
                 .property("command").set(cmd[0]);
-            result.forEach(function(keyval){
+            result.forEach(function (keyval) {
                 fwdMsg.property(keyval.name).set(keyval.value);
             });
             self.executeOutputLink(cmd[0], fwdMsg);
@@ -285,7 +361,7 @@ function handler() {
                     result = getCommandMeta(cmd);
                     break;
                 default:
-                    result = forwardCommand(cmd, cmdMsg);
+                    result = forwardCommand(cmd, cmdMsg.replyTo(), cmdMsg.correlationId());
                     handled = result !== null;
                     break;
             }
