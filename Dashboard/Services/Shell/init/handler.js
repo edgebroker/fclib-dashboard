@@ -107,7 +107,7 @@ function handler() {
             .property("referencevaluekey").set(referenceValueKey)
             .property("parameters").set(parms);
         stream.memory(self.compid + "_commands").add(msg);
-        if (request.property("handlerest").value().toBoolean() === true) {
+        if (request.property("handlerest").exists() && request.property("handlerest").value().toBoolean() === true) {
             if (request.property("resttopic").exists())
                 createRestHandler(request.property("requestmethod").value().toString(), command, JSON.parse(parms), request.property("resttopic").value().toString());
             else
