@@ -37,41 +37,41 @@ function handler() {
 
     stream.create().memoryGroup(this.memory_sec, this.groupProp).inactivityTimeout().minutes(1).onCreate(function (key) {
         stream.create().memory(key + "_" + self.memory_sec).heap().limit().timeUnitChange().seconds(self.updateIntervalSec).onRetire(function (retired) {
-            storeNextMemory(key, stream.memoryGroup(self.memory_min), retired, time.startOfSecond(time.currentTime(), 0), stream.output(self.streamname_min));
+            storeNextMemory(key, stream.memoryGroup(self.memory_min), retired);
         });
         return stream.memory(key + "_" + self.memory_sec);
     });
 
     stream.create().memoryGroup(this.memory_min, this.groupProp).inactivityTimeout().minutes(2).onCreate(function (key) {
-        createMemory(key + "_" + self.memory_min).orderBy("_TIME").limit().timeUnitChange().minutes(1).onRetire(function (retired) {
-            storeNextMemory(key, stream.memoryGroup(self.memory_hour), retired, time.startOfMinute(getTime(retired), 0), stream.output(self.streamname_hour));
+        createMemory(key + "_" + self.memory_min).limit().timeUnitChange().minutes(1).onRetire(function (retired) {
+            storeNextMemory(key, stream.memoryGroup(self.memory_hour), retired);
         });
         return stream.memory(key + "_" + self.memory_min);
     });
 
     stream.create().memoryGroup(this.memory_hour, this.groupProp).inactivityTimeout().minutes(90).onCreate(function (key) {
-        createMemory(key + "_" + self.memory_hour).orderBy("_TIME").limit().timeUnitChange().hours(1).onRetire(function (retired) {
-            storeNextMemory(key, stream.memoryGroup(self.memory_day), retired, time.startOfHour(getTime(retired), 0), stream.output(self.streamname_day));
+        createMemory(key + "_" + self.memory_hour).limit().timeUnitChange().hours(1).onRetire(function (retired) {
+            storeNextMemory(key, stream.memoryGroup(self.memory_day), retired);
         });
         return stream.memory(key + "_" + self.memory_hour);
     });
 
     stream.create().memoryGroup(this.memory_day, this.groupProp).inactivityTimeout().hours(26).onCreate(function (key) {
-        createMemory(key + "_" + self.memory_day).orderBy("_TIME").limit().timeUnitChange().days(1).onRetire(function (retired) {
-            storeNextMemory(key, stream.memoryGroup(self.memory_month), retired, time.startOfDay(getTime(retired), 0), stream.output(self.streamname_month));
+        createMemory(key + "_" + self.memory_day).limit().timeUnitChange().days(1).onRetire(function (retired) {
+            storeNextMemory(key, stream.memoryGroup(self.memory_month), retired);
         });
         return stream.memory(key + "_" + self.memory_day);
     });
 
     stream.create().memoryGroup(this.memory_month, this.groupProp).inactivityTimeout().days(33).onCreate(function (key) {
-        createMemory(key + "_" + self.memory_month).orderBy("_TIME").limit().timeUnitChange().months(1).onRetire(function (retired) {
-            storeNextMemory(key, stream.memoryGroup(self.memory_year), retired, time.startOfMonth(getTime(retired), 0), stream.output(self.memory_year));
+        createMemory(key + "_" + self.memory_month).limit().timeUnitChange().months(1).onRetire(function (retired) {
+            storeNextMemory(key, stream.memoryGroup(self.memory_year), retired);
         });
         return stream.memory(key + "_" + self.memory_month);
     });
 
     stream.create().memoryGroup(this.memory_year, this.groupProp).inactivityTimeout().days(368).onCreate(function (key) {
-        createMemory(key + "_" + self.memory_year).orderBy("_TIME").limit().timeUnitChange().years(1);
+        createMemory(key + "_" + self.memory_year).limit().timeUnitChange().years(1);
         return stream.memory(key + "_" + self.memory_year);
     });
 
@@ -161,12 +161,11 @@ function handler() {
         return res;
     }
 
-    function storeNextMemory(key, memory, retired, t, out) {
+    function storeNextMemory(key, memory, retired) {
         var result = performFunc(retired);
         if (self.func === "min" || result !== 0) {
             var msg = stream.create().message().message().property(self.groupProp).set(key);
             msg.property(self.valueProp).set(result);
-            msg.property("_TIME").set(t);
             memory.add(msg);
         }
     }

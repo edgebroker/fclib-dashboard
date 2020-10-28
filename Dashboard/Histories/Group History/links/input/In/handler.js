@@ -34,6 +34,5 @@ function handler(In) {
                 msg.property(this.valueProp).set(In.property(this.valueProp).value().toObject());
             break;
     }
-    msg.property("_TIME").set(time.currentTime());
     stream.memoryGroup(this.memory_sec).add(msg);
 }
