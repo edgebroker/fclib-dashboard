@@ -1,12 +1,13 @@
 function handler() {
     var self = this;
-    this.streamname = "stream_" + stream.routerName() + "_" + stream.fullyQualifiedName().replace(/\./g, "_") + "_shell_" + this.props["shellname"];
+    this.shellName = this.props["shellname"];
+    this.streamname = "stream_" + stream.routerName() + "_" + stream.fullyQualifiedName().replace(/\./g, "_") + "_shell_" + this.shellName;
     this.sharedQueue = this.flowcontext.getFlowQueue();
     this.registryTopic = "stream_" + stream.routerName() + "_streamregistry";
     this.metaRegistryTopic = "stream_" + stream.routerName() + "_metastreamregistry";
     this.streammeta = {
-        name: stream.fullyQualifiedName().replace(/\./g, "_") + "_shell_" + this.props["shellname"],
-        label: stream.fullyQualifiedName().replace(/\./g, "/") + "/Shell/" + this.props["shellname"],
+        name: stream.fullyQualifiedName().replace(/\./g, "_") + "_shell_" + this.shellName,
+        label: stream.fullyQualifiedName().replace(/\./g, "/") + "/Shell/" + this.shellName,
         type: "service"
     };
     var Util = Java.type("com.swiftmq.util.SwiftUtilities");
@@ -83,13 +84,19 @@ function handler() {
             stream.memory(self.compid + "_restrequests").index("restid").remove(rid);
             var originalRequest = result.first();
             var shellResult = JSON.parse(input.current().body());
-            var replyResult = {
-                _http_code: shellResult[0] === "Error:"? 400:200,
-                message: shellResult.body.message[1]
-            };
-            try {
-                replyResult.message = JSON.parse(replyResult.message);
-            } catch (e) {}
+            var replyResult;
+            if (shellResult[0] === "Error:") {
+                 replyResult = {
+                    _http_code: shellResult[0] === "Error:" ? 400 : 200,
+                    message: shellResult.body.message[1]
+                };
+            } else {
+                try {
+                    replyResult = JSON.parse(replyResult.message[1]);
+                } catch (e) {
+                    replyResult.message = "Shell Reply contains wrong JSON: "+e;
+                }
+            }
             sendRestReply(originalRequest, JSON.stringify(replyResult));
         }
     });
@@ -111,7 +118,7 @@ function handler() {
             if (request.property("resttopic").exists())
                 createRestHandler(request.property("requestmethod").value().toString(), command, JSON.parse(parms), request.property("resttopic").value().toString());
             else
-                createRestHandler(request.property("requestmethod").value().toString(), command, JSON.parse(parms), stream.domainName() + "." + command);
+                createRestHandler(request.property("requestmethod").value().toString(), command, JSON.parse(parms), stream.domainName() + "." + this.shellName + "." + command);
         }
     };
 
